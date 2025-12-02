@@ -2,1316 +2,1153 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FINPRO 9.0: Dashboard Personal de Ahorro</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* --- 1. VARIABLES Y BASE --- */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-        :root {
-            --color-bg: #f5f7fa; /* Fondo más claro */
-            --color-card: #ffffff;
-            --color-text: #32325d; /* Texto más oscuro y profesional */
-            --color-primary: #5e72e4; /* Azul Primario */
-            --color-income: #2dce89; /* Verde (Ingreso) */
-            --color-expense: #f5365c; /* Rojo (Gasto) */
-            --color-projection: #fb6340; /* Naranja (Proyección) */
-            --color-fixed: #11cdef; /* Cyan (Fijos) */
-            --color-saving: #00bcd4; /* Azul Turquesa (Ahorro) */
-            --color-warning: #ffd600; /* Amarillo (Alerta) */
-            --color-historical: #778899; /* Gris para historial */
-            --shadow: 0 0 2rem 0 rgba(136, 152, 170, 0.15); /* Sombra más suave y moderna */
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--color-bg); color: var(--color-text); line-height: 1.6; }
-        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
-        
-        /* --- 2. HEADER Y BOTONES --- */
-        header { 
-            background: var(--color-card); padding: 1.5rem 2rem; border-radius: 12px; 
-            box-shadow: var(--shadow); margin-bottom: 2rem; 
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
-        }
-        header h1 { color: var(--color-primary); font-size: 1.6rem; font-weight: 700; }
-        .header-actions { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-        .input-actions { display: flex; gap: 10px; }
-        
-        .btn-input, .btn-action { 
-            padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; 
-            cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem;
-            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-            text-transform: uppercase;
-            white-space: nowrap; /* Evita que el texto se rompa en los botones */
-        }
-        .btn-input.income { background-color: var(--color-income); color: white; }
-        .btn-input.expense { background-color: var(--color-expense); color: white; }
-        #open-fixed-modal-btn { background-color: var(--color-fixed); color: white; }
-        
-        /* Contenedor de Meta (Mejor Estilo) */
-        .goal-container { 
-            display: flex; align-items: center; background-color: #f6f9fc; padding: 8px 12px; 
-            border-radius: 8px; border: 1px solid #e9ecef;
-        }
-        .goal-container label { font-weight: 600; margin-right: 8px; color: var(--color-primary); }
-        #goal-input { 
-            border: none; padding: 5px; border-radius: 4px; 
-            text-align: right; font-weight: 600; background: transparent; 
-            width: 100px; color: var(--color-expense);
-        }
-
-        /* --- 3. DASHBOARD Y TARJETAS KPI --- */
-        .dashboard { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
-            gap: 1.5rem; 
-            margin-bottom: 2rem; 
-        }
-        .card { 
-            background-color: var(--color-card); padding: 1.2rem; border-radius: 12px; 
-            box-shadow: var(--shadow); text-align: left; transition: transform 0.3s; 
-            border-left: 5px solid transparent;
-        }
-        .card:hover { transform: translateY(-5px); }
-        .card h2 { 
-            font-size: 0.8rem; color: #8898aa; margin-bottom: 0.5rem; font-weight: 600; 
-            text-transform: uppercase; display: flex; align-items: center;
-        }
-        .card h2 i { margin-right: 8px; }
-        .card p { font-size: 1.8rem; font-weight: 700; color: var(--color-text); }
-
-        .card.fixed { border-left-color: var(--color-fixed); }
-        .card.income { border-left-color: var(--color-income); }
-        .card.expense { border-left-color: var(--color-expense); }
-        .card.saving { border-left-color: var(--color-saving); }
-        .card.projection { border-left-color: var(--color-projection); }
-        .card.historical { border-left-color: var(--color-historical); } 
-        
-        .card.saving p { color: var(--color-saving); }
-        .card.balance p { color: var(--color-primary); }
-        
-        /* --- 4. SECCIÓN DE METAS --- */
-        .goal-container-main { 
-            background-color: var(--color-card); padding: 1.5rem; border-radius: 12px; 
-            box-shadow: var(--shadow); margin-bottom: 2rem;
-        }
-        .goal-container-main h3 { color: var(--color-text); margin-bottom: 15px; font-weight: 600; }
-        
-        .progress-bar-container { 
-            height: 10px; background-color: #e9ecef; border-radius: 5px; 
-            overflow: hidden; margin-bottom: 15px;
-        }
-        .progress-bar { 
-            height: 100%; width: 0%; background-color: var(--color-primary); 
-            transition: width 0.5s ease-in-out; border-radius: 5px;
-        }
-        
-        .goal-kpis { display: flex; justify-content: space-between; gap: 1.5rem; }
-        .goal-kpis .card { flex-grow: 1; text-align: center; border-left: none; }
-        .goal-kpis .card h2 { justify-content: center; }
-        .goal-kpis .card p { font-size: 1.4rem !important; }
-        
-        /* --- 5. LEDGER (CORE) --- */
-        .ledger-container { 
-            background-color: var(--color-card); padding: 1.5rem; border-radius: 12px; 
-            box-shadow: var(--shadow); overflow-x: auto; margin-top: 2rem;
-        }
-        #projection-ledger { width: 100%; border-collapse: collapse; text-align: right; min-width: 900px; }
-        #projection-ledger th, #projection-ledger td { padding: 12px 18px; border: 1px solid #eee; }
-        #projection-ledger th { 
-            background-color: var(--color-primary); color: white; text-align: center; 
-            font-size: 0.9em; position: sticky; top: 0; font-weight: 700;
-        }
-        #projection-ledger td:first-child { 
-            text-align: left; font-weight: 600; position: sticky; left: 0; 
-            background-color: #fcfcfc; z-index: 10;
-        }
-        #projection-ledger tr:nth-child(even) { background-color: #f8f9fe; } /* Alternancia más sutil */
-        
-        /* Estilos de Contenido del Ledger */
-        #projection-ledger .accumulated-saving { font-weight: 700; background-color: #e0f7fa; color: var(--color-saving); }
-        
-        /* Estilos para el Despliegue Anual */
-        #projection-ledger tr.meta-alcanzada { 
-            background-color: #e9ecef !important; /* Fondo más neutro para el resumen */
-            color: var(--color-primary); 
-            font-weight: 700;
-        } 
-        .year-toggle {
-            margin-right: 10px;
-            color: var(--color-primary);
-            transition: transform 0.2s;
-        }
-        .fa-chevron-down {
-            transform: rotate(90deg);
-        }
-
-        #projection-ledger .current-month { background-color: var(--color-warning) !important; color: var(--color-text); } /* Mes Actual */
-        #projection-ledger .negative { color: var(--color-expense); font-weight: 600; } /* Números Negativos */
-        
-        /* --- 6. GRÁFICOS Y HISTORIAL (Ajuste de Tamaño) --- */
-        /* Grilla principal ajustada para 2/3 y 1/3 */
-        .charts-history-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 2rem; }
-        .history-container { 
-            background: var(--color-card); padding: 1.5rem; border-radius: 12px; 
-            box-shadow: var(--shadow);
-        }
-        .chart-box { 
-            margin-bottom: 20px; 
-            max-height: 350px; /* Reducción de altura máxima */
-        }
-        .history-container h3 { margin-bottom: 15px; color: var(--color-text); font-weight: 600; }
-        
-        /* Controles de Filtro */
-        .history-filters {
-            display: flex; gap: 10px; margin-bottom: 15px;
-        }
-        .history-filters select {
-            padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;
-            flex-grow: 1;
-        }
-        
-        /* Lista de Historial */
-        #history-list { 
-            list-style-type: none; 
-            max-height: 300px; /* Ajuste para dejar espacio para filtros */
-            overflow-y: auto; 
-            padding-right: 10px; 
-        }
-        #history-list li { 
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 10px 0; border-bottom: 1px dotted #eee; font-size: 0.95rem;
-        }
-        #history-list li:last-child { border-bottom: none; }
-        .history-detail span { display: block; }
-        .history-detail .date { font-size: 0.8rem; color: #8898aa; }
-        .history-amount { font-weight: 600; }
-        .history-amount.ingreso { color: var(--color-income); }
-        .history-amount.egreso { color: var(--color-expense); }
-        .history-action button { 
-            background: none; border: none; color: var(--color-expense); 
-            cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
-        }
-        .history-action button:hover { opacity: 1; }
-        
-        /* Lista de Fijos */
-        #fixed-income-list li, #fixed-list li {
-            display: flex; justify-content: space-between; align-items: center; 
-            padding: 8px 0; border-bottom: 1px dotted #eee;
-        }
-        #fixed-income-list li span, #fixed-list li span { font-weight: 500; }
-        #fixed-list .amount { color: var(--color-expense); }
-
-
-        /* --- 7. MODALES Y FORMULARIOS --- */
-        .modal { 
-            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; 
-            height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); 
-            padding-top: 60px;
-        }
-        .modal-content { 
-            background-color: var(--color-card); margin: 5% auto; padding: 30px; 
-            border-radius: 12px; box-shadow: var(--shadow); 
-            width: 90%; max-width: 500px; position: relative;
-        }
-        .close-btn { 
-            color: #aaa; float: right; font-size: 28px; font-weight: bold; 
-            position: absolute; top: 10px; right: 20px;
-        }
-        .close-btn:hover, .close-btn:focus { color: var(--color-expense); text-decoration: none; cursor: pointer; }
-        
-        .modal-content h2 { color: var(--color-primary); margin-bottom: 20px; font-size: 1.5rem; }
-        .modal-content form input[type="text"], .modal-content form input[type="number"], .modal-content form input[type="date"], .modal-content form select {
-            width: 100%; padding: 12px; margin: 8px 0 15px 0; display: inline-block; 
-            border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;
-            font-size: 1rem;
-        }
-        /* Resaltar campos inválidos (Validación Visual) */
-        .modal-content form input:invalid:not(:placeholder-shown), .modal-content form input.invalid {
-            border-color: var(--color-expense) !important;
-            box-shadow: 0 0 0 0.2rem rgba(245, 54, 92, 0.25);
-        }
-        .modal-content form button { 
-            width: 100%; padding: 12px; background-color: var(--color-primary); 
-            color: white; border: none; border-radius: 6px; cursor: pointer; 
-            font-weight: 600; transition: background-color 0.3s;
-        }
-        .modal-content form button:hover { opacity: 0.9; }
-
-        /* --- 8. TOAST NOTIFICATIONS (NUEVO) --- */
-        #toast-container {
-            position: fixed; top: 20px; right: 20px; z-index: 2000;
-        }
-        .toast {
-            background-color: #333; color: white; padding: 15px 25px; border-radius: 8px;
-            margin-bottom: 10px; opacity: 0; transition: opacity 0.5s, transform 0.5s;
-            transform: translateX(100%); min-width: 250px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            font-size: 0.95rem; display: flex; align-items: center; gap: 10px;
-        }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        .toast i.fas { font-size: 1.2rem; }
-        .toast.success { background-color: var(--color-income); }
-        .toast.error { background-color: var(--color-expense); }
-        .toast.info { background-color: var(--color-primary); }
-        
-        /* --- 9. FOOTER DE AUTOR --- */
-        .author-footer {
-            text-align: center;
-            padding: 1rem 0;
-            margin-top: 3rem;
-            border-top: 1px solid #e9ecef;
-            color: #8898aa;
-            font-size: 0.85rem;
-        }
-        .author-footer a {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .author-footer a:hover {
-            text-decoration: underline;
-        }
-
-
-        /* --- 10. MEDIA QUERIES PARA RESPONSIVE DESIGN (MEJORADO) --- */
-
-        /* Ajustes para tabletas (992px y menos) */
-        @media (max-width: 992px) {
-            .container { margin: 1rem auto; padding: 0 1rem; }
-            
-            /* Header: Apila los botones de acción para mejor espacio */
-            header { 
-                flex-direction: column; 
-                align-items: flex-start;
-            }
-            .header-actions { 
-                width: 100%;
-                justify-content: space-between; /* Distribuye bien los grupos de botones/meta */
-            }
-            .input-actions {
-                flex-grow: 1; 
-                justify-content: flex-start;
-            }
-            
-            /* Dashboard: Deja que el grid haga su trabajo, pero asegura padding/margen */
-            .dashboard { 
-                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Tarjetas un poco más pequeñas */
-                gap: 1rem;
-            }
-            .card h2 { font-size: 0.75rem; }
-            .card p { font-size: 1.6rem; }
-            
-            /* Metas: Los KPIs de meta se apilan en dos columnas */
-            .goal-kpis { 
-                flex-wrap: wrap; 
-                gap: 1rem;
-            }
-            .goal-kpis .card {
-                min-width: calc(50% - 0.5rem); /* Ocupa la mitad del ancho */
-            }
-
-            /* Ledger: No requiere cambios, ya tiene overflow-x: auto y min-width: 900px */
-            
-            /* Gráficos e Historial: Se apilan verticalmente */
-            .charts-history-grid { 
-                grid-template-columns: 1fr; 
-                gap: 1.5rem; 
-            }
-            .chart-box { max-height: 400px; } /* Altura fija para gráficos en móviles */
-        }
-
-        /* Ajustes para móviles pequeños (576px y menos) */
-        @media (max-width: 576px) {
-            
-            /* Header: Todos los elementos se apilan */
-            .header-actions {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            .input-actions {
-                width: 100%;
-                flex-direction: column; /* Apila los botones de ingreso/gasto */
-            }
-            .btn-input, .btn-action { width: 100%; }
-            .goal-container { width: 100%; }
-            #goal-input { width: 100%; } /* Input de meta al 100% */
-
-            /* Dashboard: Muestra 2 columnas para una mejor densidad */
-            .dashboard { 
-                grid-template-columns: repeat(2, 1fr); 
-            }
-            .card { padding: 1rem; }
-            .card h2 { font-size: 0.65rem; }
-            .card p { font-size: 1.4rem; }
-            
-            /* Metas: Apila los KPIs en una sola columna */
-            .goal-kpis .card {
-                min-width: 100%; 
-            }
-            
-            /* Historial: Asegura que los filtros se apilen */
-            .history-filters { flex-direction: column; gap: 8px; }
-            .history-filters select { width: 100%; }
-            
-            /* Modales: Ajusta el margen superior para mejor visualización */
-             .modal-content { margin: 10% auto; }
-        }
-    </style>
-</head>
-
-<body>
-<div class="container">
-    <header>
-        <h1><i class="fas fa-chart-pie"></i> FINPRO 9.0: Dashboard Personal</h1>
-        <div class="header-actions">
-            <div class="input-actions">
-                <button id="open-income-modal" class="btn-input income"><i class="fas fa-plus"></i> Ingreso Variable</button>
-                <button id="open-expense-modal" class="btn-input expense"><i class="fas fa-minus"></i> Gasto Variable</button>
-            </div>
-            
-            <button id="open-fixed-modal-btn" class="btn-action"><i class="fas fa-cog"></i> Recurrentes</button>
-            <div class="goal-container">
-                <label for="goal-input">🎯 Meta Total:</label>
-                <input type="number" id="goal-input" placeholder="5000" step="0.01">
-            </div>
-        </div>
-    </header>
-
-    <div class="dashboard">
-        <div class="card fixed"><h2><i class="fas fa-wallet"></i> Ingresos Fijos</h2><p id="fixed-income-total">$0.00</p></div>
-        <div class="card fixed"><h2><i class="fas fa-house-chimney"></i> Gasto Fijo</h2><p id="fixed-expense">$0.00</p></div>
-        <div class="card income"><h2><i class="fas fa-money-bill-transfer"></i> Ingreso Variable (Mes)</h2><p id="total-variable-income">$0.00</p></div>
-        <div class="card expense"><h2><i class="fas fa-shopping-basket"></i> Gasto Variable (Mes)</h2><p id="total-variable-expense">$0.00</p></div>
-        <div class="card saving"><h2><i class="fas fa-piggy-bank"></i> Flujo de Caja Mensual</h2><p id="net-saving-per-month">$0.00</p></div>
-        <div class="card balance"><h2><i class="fas fa-calendar-check"></i> Capital Proyectado (12 meses)</h2><p id="annual-projection">$0.00</p></div>
-        <div class="card historical"><h2><i class="fas fa-clock-rotate-left"></i> Ahorro Histórico Acumulado</h2><p id="historical-savings">$0.00</p></div>
-    </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Organizador UTPL - Gestión y Reportes</title>
     
-    <div class="goal-container-main">
-        <h3>Estado de la Meta: <span id="current-goal-amount">$0.00</span></h3>
-        <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
-        
-        <div class="goal-kpis">
-            <div class="card saving">
-                <h2>Ahorro Neto/Mes Requerido:</h2>
-                <p id="goal-status" style="font-size: 1.2rem;">Ahorrando $0.00 por mes.</p>
-            </div>
-            <div class="card time">
-                <h2>Tiempo Estimado a la Meta:</h2>
-                <p id="time-to-goal" style="font-size: 1.4rem; color: var(--color-text);">---</p>
-            </div>
-            <div class="card projection">
-                <h2>Mes de Conclusión Estimada:</h2>
-                <p id="projected-completion-month" style="font-size: 1.4rem; color: var(--color-text);">---</p>
-            </div>
+    <!-- Favicon -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+
+    <!-- ESTILOS BÁSICOS -->
+    <style>
+        body { 
+            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background-color: #f8fafc; 
+            color: #1e293b;
+        }
+        .initial-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #1e3a8a;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #facc15; 
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* ESTILOS PARA IMPRESIÓN (OCULTAR INTERFAZ) */
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; -webkit-print-color-adjust: exact; }
+            #root { padding: 0; }
+        }
+        .print-only { display: none; }
+    </style>
+
+    <!-- LIBRERÍAS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div id="root">
+        <div class="initial-loader">
+            <div class="spinner"></div>
+            <h2 style="font-weight: 700; font-size: 1.5rem;">Cargando Sistema...</h2>
         </div>
     </div>
 
-    <div class="ledger-container">
-        <h3 style="margin-bottom: 10px;">📊 Proyección de Ahorro Acumulado (Ledger Estratégico)</h3>
-        <table id="projection-ledger"></table>
-    </div>
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useMemo, useEffect } = React;
 
-    <div class="charts-history-grid">
-        <div class="history-container">
-            <h3>Gráficos de Análisis</h3>
-            <div class="chart-box"><canvas id="distributionChart"></canvas></div>
-            <div class="chart-box"><canvas id="trendChart"></canvas></div>
-        </div>
-        
-        <div class="history-container">
-            <h3>Detalle de Movimientos Variables <i class="fas fa-history"></i></h3>
-            <div class="history-filters">
-                <select id="filter-type">
-                    <option value="todos">Mostrar: Todos</option>
-                    <option value="ingreso">Ingresos</option>
-                    <option value="egreso">Gastos</option>
-                </select>
-                <select id="filter-category">
-                    <option value="todos">Categoría: Todas</option>
-                    <option value="Alimentación">Alimentación</option>
-                    <option value="Transporte">Transporte</option>
-                    <option value="Ocio">Ocio</option>
-                    <option value="Inversión">Inversión</option>
-                    <option value="Regalo">Regalo/Donación</option>
-                    <option value="Venta">Venta</option>
-                    <option value="Otros">Otros</option>
-                    <option value="Sin Categoría">Sin Categoría</option>
-                </select>
-            </div>
-            <ul id="history-list"></ul>
-        </div>
-    </div>
-</div>
-
-<div id="toast-container"></div>
-
-<div id="fixed-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn fixed-close-btn">&times;</span>
-        <h2>⚙️ Ingresos y Gastos Recurrentes</h2>
-        
-        <form id="fixed-income-form">
-            <h4 style="color: var(--color-income);"><i class="fas fa-hand-holding-dollar"></i> Ingreso Fijo:</h4>
-            <input type="number" id="fixed-income-amount" placeholder="Monto del Ingreso Fijo" step="0.01" min="0" required>
-            <input type="text" id="fixed-income-detail" placeholder="Descripción (Ej: Salario 'X', Renta Apartamento)" required>
-            <button type="submit" style="background-color: var(--color-income);"><i class="fas fa-plus-circle"></i> Añadir Ingreso Fijo</button>
-        </form>
-        
-        <h4 style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; color: var(--color-income);">Ingresos Fijos Actuales:</h4>
-        <ul id="fixed-income-list" style="list-style-type: none; margin-top: 5px;"></ul>
-
-
-        <h4 style="margin-top: 20px; color: var(--color-expense);"><i class="fas fa-file-invoice-dollar"></i> Egresos Fijos Mensuales:</h4>
-        <form id="fixed-expense-form" style="margin-top: 5px;">
-            <input type="number" id="fixed-expense-amount" placeholder="Monto del Gasto Fijo" step="0.01" min="0" required>
-            <input type="text" id="fixed-expense-detail" placeholder="Descripción (Ej: Alquiler, Suscripción)" required>
-            <button type="submit" style="background-color: var(--color-expense);"><i class="fas fa-plus-circle"></i> Añadir Gasto Fijo</button>
-        </form>
-        
-        <ul id="fixed-list" style="list-style-type: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;"></ul>
-
-        <h4 style="margin-top: 20px; color: var(--color-primary); border-top: 1px solid #eee; padding-top: 15px;"><i class="fas fa-calculator"></i> Calculadora de Flujo Neto Fijo</h4>
-        <p style="font-size: 0.9rem; margin-bottom: 10px;">Si mis ingresos fijos son <span id="calc-income" style="font-weight: bold; color: var(--color-income);">$0.00</span> y mi gasto fijo actual es <span id="calc-expense" style="font-weight: bold; color: var(--color-expense);">$0.00</span>:</p>
-        <p style="font-size: 1.1rem; font-weight: 700;">Mi Flujo Neto Fijo es: <span id="calc-net-flow" style="color: var(--color-saving);">$0.00</span></p>
-
-    </div>
-</div>
-
-<div id="variable-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn variable-close-btn">&times;</span>
-        <h2>➕ Añadir Movimiento Variable</h2>
-        <form id="variable-transaction-form">
-            <input type="hidden" id="modal-variable-type" name="variable-type" value="ingreso">
-
-            <label for="variable-date">Fecha del Movimiento:</label>
-            <input type="date" id="variable-date" required>
-            
-            <label for="variable-category" style="margin-top: 10px; display: block;">Categoría:</label>
-            <select id="variable-category" required>
-                <option value="Sin Categoría">Sin Categoría</option>
-                <option value="Alimentación">Alimentación</option>
-                <option value="Transporte">Transporte</option>
-                <option value="Ocio">Ocio</option>
-                <option value="Inversión">Inversión</option>
-                <option value="Regalo">Regalo/Donación</option>
-                <option value="Venta">Venta</option>
-                <option value="Otros">Otros</option>
-            </select>
-
-            <input type="text" id="variable-detail" placeholder="Detalle (Ej: Compra de café, Venta de artículo)" required>
-            <input type="number" id="variable-amount" placeholder="Monto" step="0.01" min="0" required>
-            
-            <button type="submit" id="variable-submit-btn">Guardar Movimiento</button>
-        </form>
-    </div>
-</div>
-
-<div class="author-footer">
-    Creado por <span style="font-weight: 700;">Tito Feijo</span> | E-mail: <a href="mailto:titofeijo@icloud.com">titofeijo@icloud.com</a>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // --- 1. REFERENCIAS Y ESTADO ---
-        const fixedModal = document.getElementById('fixed-modal');
-        const variableModal = document.getElementById('variable-modal');
-        const openFixedBtn = document.getElementById('open-fixed-modal-btn');
-        const openIncomeModalBtn = document.getElementById('open-income-modal');
-        const openExpenseModalBtn = document.getElementById('open-expense-modal');
-        const closeFixedBtn = document.querySelector('.fixed-close-btn');
-        const closeVariableBtn = document.querySelector('.variable-close-btn');
-        const filterTypeEl = document.getElementById('filter-type'); 
-        const filterCategoryEl = document.getElementById('filter-category'); 
-
-        const fixedIncomeForm = document.getElementById('fixed-income-form');
-        const fixedExpenseForm = document.getElementById('fixed-expense-form');
-        const variableTransactionForm = document.getElementById('variable-transaction-form');
-        const variableTypeInput = document.getElementById('modal-variable-type');
-        const variableSubmitBtn = document.getElementById('variable-submit-btn');
-
-        let distChart, trendChart;
-        const distCtx = document.getElementById('distributionChart').getContext('2d');
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        const monthsNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
-        const today = new Date();
-        const currentMonthKey = `${today.getFullYear()}-${today.getMonth()}`;
-        const currentMonthNumber = today.getMonth();
-        const currentYear = today.getFullYear();
-
-
-        // Estado del Sistema (Persistencia)
-        let fixedIncomes = JSON.parse(localStorage.getItem('finpro_fixed_incomes')) || []; 
-        let fixedExpenses = JSON.parse(localStorage.getItem('finpro_fixed_expenses')) || []; 
-        let variableTransactions = JSON.parse(localStorage.getItem('finpro_variable_transactions')) || [];
-        let goal = parseFloat(localStorage.getItem('finpro_goal_v3')) || 0;
-
-        // --- 2. LÓGICA DE PERSISTENCIA Y FORMATO ---
-        const formatCurrency = (num) => {
-            const absNum = Math.abs(num);
-            const formatted = `$${absNum.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
-            return num < 0 ? `<span class="negative">-${formatted}</span>` : formatted; 
-        };
-        const formatValue = (num) => num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
-        
-        const saveData = () => {
-            localStorage.setItem('finpro_fixed_incomes', JSON.stringify(fixedIncomes)); 
-            localStorage.setItem('finpro_fixed_expenses', JSON.stringify(fixedExpenses));
-            localStorage.setItem('finpro_variable_transactions', JSON.stringify(variableTransactions));
-            localStorage.setItem('finpro_goal_v3', goal.toString());
+        // --- FUNCIONES DE SEGURIDAD PARA GUARDADO LOCAL ---
+        const safeLoadStorage = (key) => {
+            try {
+                const item = localStorage.getItem(key);
+                if (!item) return new Set();
+                const parsed = JSON.parse(item);
+                if (Array.isArray(parsed)) {
+                    return new Set(parsed);
+                } else {
+                    return new Set();
+                }
+            } catch (e) {
+                console.error("Error al leer memoria local:", e);
+                return new Set();
+            }
         };
 
-        // --- 2.5. TOAST NOTIFICATIONS ---
-        const showToast = (message, type = 'info') => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const iconClass = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
-            
-            toast.classList.add('toast', type);
-            toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
-            
-            container.appendChild(toast);
-            
-            // Forzar reflow para la transición
-            void toast.offsetWidth; 
+        // --- ICONOS SVG ---
+        const ChairIcon = ({size=24, className="", fill="none"}) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H7v-2a2 2 0 0 0-4 0Z"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>
+        );
+        const Search = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>);
+        const User = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>);
+        const X = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>);
+        const CheckCircle = ({size=24, className="", fill="none"}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-12 12-4-4"/></svg>);
+        const Users = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>);
+        const Calendar = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>);
+        const ArrowLeft = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>);
+        const ChevronRight = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>);
+        const MousePointerClick = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 9 5 12 1.8-5.2L21 14Z"/><path d="M7.2 2.2 8 5.1"/><path d="m5.1 8-2.9-.8"/><path d="M14 4.1 12 6"/><path d="m6 12-1.9 2"/></svg>);
+        const Download = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>);
+        const FileSpreadsheet = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h2"/><path d="M8 17h2"/><path d="M14 13h2"/><path d="M14 17h2"/></svg>);
+        const Copy = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>);
+        const Printer = ({size=24, className=""}) => (<svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>);
 
-            toast.classList.add('show');
+        // --- DATOS COMPLETOS ---
+
+        const event1Data = [
+          {
+            id: 'e1-row-1',
+            school: 'UE San José',
+            seatsLeft: [
+              { id: 'e1-s1-1', name: 'GALARZA CHONILLO MELISSA THAIMI', pos: 1 },
+              { id: 'e1-s1-2', name: 'INTRIAGO ZAMBRANO GABRIEL ADRIAN', pos: 2 },
+              { id: 'e1-s1-3', name: 'TARANTO SUAREZ GABRIELA STEFANÍA', pos: 3 },
+              { id: 'e1-s1-4', name: 'BARRETO VELIZ JENNIFER PATRICIA', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e1-s1-6', name: 'MENÉNDEZ PALACIOS RITSI MONSERRATE', pos: 6 },
+              { id: 'e1-s1-7', name: 'MARTÍNEZ AMORES OMAYRA KAINA', pos: 7 },
+              { id: 'e1-s1-8', name: 'BOCCANEDES BARCIA MADELAINE ISABELLA', pos: 8 },
+              { id: 'e1-s1-9', name: 'VEGA PEÑA ANENT KINTIA', pos: 9 },
+              { id: 'e1-s1-10', name: 'VILLACIS FRANCO SHARICK NATHALIA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e1-row-2',
+            school: 'UE Lev Vigostky',
+            seatsLeft: [
+              { id: 'e1-s2-1', name: 'MEJIA MACÍAS AXEL ARGELIS', pos: 1 },
+              { id: 'e1-s2-2', name: 'MENDOZA BUSTAMANTE KARLA ABIGAIL', pos: 2 },
+              { id: 'e1-s2-3', name: 'ALONZO INTRIAGO JESÚS AMADO', pos: 3 },
+              { id: 'e1-s2-4', name: 'MEDINA ANDRADE LISS NORELLY', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e1-s2-6', name: 'VILLACRESES ALARCÓN AMY MAITE', pos: 6 },
+              { id: 'e1-s2-7', name: 'CATAGUA LOPEZ JOHAN MANUEL', pos: 7 },
+              { id: 'e1-s2-8', name: 'VINCES VELEZ HERNY DAVID', pos: 8 },
+              { id: 'e1-s2-9', name: 'PINARGOTE PALMA KEVIN XAVIER', pos: 9 },
+              { id: 'e1-s2-10', name: 'SALTOS QUIROZ SHERLY MICHEL', pos: 10 },
+            ]
+          },
+          {
+            id: 'e1-row-3',
+            school: 'UE Olga Meza Santana',
+            seatsLeft: [
+              { id: 'e1-s3-1', name: 'MENDOZA GARCIA MEDARDO ANTHONIO', pos: 1 },
+              { id: 'e1-s3-2', name: 'BAILON CASTILLO JAIRO YAIR', pos: 2 },
+              { id: 'e1-s3-3', name: 'PALMA INDACOCHEA AARON JURHELL', pos: 3 },
+              { id: 'e1-s3-4', name: 'PILOSO CEDEÑO JEAN POOL', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e1-s3-6', name: 'CHANCAY ALVARADO SOFIA ALEJANDRA', pos: 6 },
+              { id: 'e1-s3-7', name: 'SALINAS DELGADO VICTOR XAVIER', pos: 7 },
+              { id: 'e1-s3-8', name: 'ZAMBRANO BORRERO MIA SARAI', pos: 8 },
+              { id: 'e1-s3-9', name: 'PICO MUÑOZ CRISTHOPER DAMIAN', pos: 9 },
+              { id: 'e1-s3-10', name: 'DELGADO VELEZ GABRIELA NATHALIE', pos: 10 },
+            ]
+          },
+          {
+            id: 'e1-row-4',
+            school: 'UE Kruger School',
+            seatsLeft: [
+              { id: 'e1-s4-1', name: 'LOPEZ PINARGOTE LEIDY ZULEIKA', pos: 1 },
+              { id: 'e1-s4-2', name: 'VILLALVA GONZÁLEZ DAVID', pos: 2 },
+              { id: 'e1-s4-3', name: 'POLANCO BENALCÁZAR FRANKLIN ALEJANDRO', pos: 3 },
+              { id: 'e1-s4-4', name: 'SUAREZ QUIROZ STALIN ENRIQUE', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e1-s4-6', name: 'ALVAREZ ROBLES NAOMI ANAIS', pos: 6 },
+              { id: 'e1-s4-7', name: 'MENDOZA BRAVO MICHAEL ALEJANDRO', pos: 7 },
+              { id: 'e1-s4-8', name: 'VELEZ MUÑOZ RONALD ESTEVEN', pos: 8 },
+              { id: 'e1-s4-9', name: 'BASURTO MIELES ANA MARÍA', pos: 9 },
+              { id: 'e1-s4-10', name: 'SIGCHO RIVADENEIRA FABIANA ANTONIA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e1-row-5',
+            school: 'UE Lev Vigostky',
+            seatsLeft: [
+              { id: 'e1-s5-1', name: 'PAREDES CHONG CESAR ENRIQUE', pos: 1 },
+              { id: 'e1-s5-2', name: 'MANTUANO TOALA DAVID GABRIEL', pos: 2 },
+              { id: 'e1-s5-3', name: 'QUIJIJE MOREIRA RAÚL ANDRÉS', pos: 3 },
+              { id: 'e1-s5-4', name: 'VACANTE', pos: 4 },
+            ],
+            hasRector: false,
+            seatsRight: [
+               { id: 'e1-s5-6', name: 'VACANTE', pos: 6 },
+               { id: 'e1-s5-7', name: 'VACANTE', pos: 7 },
+               { id: 'e1-s5-8', name: 'VACANTE', pos: 8 },
+               { id: 'e1-s5-9', name: 'VACANTE', pos: 9 },
+               { id: 'e1-s5-10', name: 'VACANTE', pos: 10 },
+            ]
+          }
+        ];
+
+        const event2Data = [
+          {
+            id: 'e2-row-1',
+            school: 'Academia Naval Jambelí',
+            seatsLeft: [
+              { id: 'e2-s1-1', name: 'GUILLEN LINO JONATHAN ISAAC', pos: 1 },
+              { id: 'e2-s1-2', name: 'VELIZ ZAMBRANO DANNA SAMANTHA', pos: 2 },
+              { id: 'e2-s1-3', name: 'RIVERA SANTANA ARIANA SCARLETH', pos: 3 },
+              { id: 'e2-s1-4', name: 'MASTERRENA CARRION RAMON REINALDO', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e2-s1-6', name: 'PIN TUBAY FELIPE MATEO', pos: 6 },
+              { id: 'e2-s1-7', name: 'PIN TUBAY FELIPE MATEO (2)', pos: 7 },
+              { id: 'e2-s1-8', name: 'VELEZ CEDEÑO EMILY YORIBEL', pos: 8 },
+              { id: 'e2-s1-9', name: 'QUIJANO BRAVO FELIPE ALEXANDER', pos: 9 },
+              { id: 'e2-s1-10', name: 'QUIJANO BRAVO FELIPE ALEXANDER (2)', pos: 10 },
+            ]
+          },
+          {
+            id: 'e2-row-2',
+            school: 'UE Luis Arboleda Martinez',
+            seatsLeft: [
+              { id: 'e2-s2-1', name: 'BURGOS GAVILANEZ NIURKA BEATRIZ', pos: 1 },
+              { id: 'e2-s2-2', name: 'MONTES MOREIRA FREDDY YASSIER', pos: 2 },
+              { id: 'e2-s2-3', name: 'BAILON CASTILLO JAIRO YAIR', pos: 3 },
+              { id: 'e2-s2-4', name: 'NAVARRETE CEDEÑO JOSÉ LEONARDO', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e2-s2-6', name: 'ANCHUNDIA FLORES PATRICIO GEOVANNY', pos: 6 },
+              { id: 'e2-s2-7', name: 'RODRIGUEZ SALMERON EIDAN ADRIAN', pos: 7 },
+              { id: 'e2-s2-8', name: 'SUAREZ VELEZ RONNY FABIAN', pos: 8 },
+              { id: 'e2-s2-9', name: 'MACIAS ALARCÓN JOEL ANDRÉS', pos: 9 },
+              { id: 'e2-s2-10', name: 'VINCES PERÉZ LUIS FERNANDO', pos: 10 },
+            ]
+          },
+          {
+            id: 'e2-row-3',
+            school: 'UE Tohallí',
+            seatsLeft: [
+              { id: 'e2-s3-1', name: 'DANNA ISABEL VELASQUEZ PEÑAHERRIETA', pos: 1 },
+              { id: 'e2-s3-2', name: 'ROSELYN ANAÍS LOPEZ DELGADO', pos: 2 },
+              { id: 'e2-s3-3', name: 'LUISA FERNANDA OTERO CHACON', pos: 3 },
+              { id: 'e2-s3-4', name: 'MAHOLY JAMILETH ALAVA DELGADO', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e2-s3-6', name: 'VALERIA ISABEL CAÑARTE REYES', pos: 6 },
+              { id: 'e2-s3-7', name: 'SARA ROMINA PICO ORTIZ', pos: 7 },
+              { id: 'e2-s3-8', name: 'GEANELLA ANDREÍNA TUBAY ALVAREZ', pos: 8 },
+              { id: 'e2-s3-9', name: 'DARA MADAI SANCHEZ ZALDUMBIDE', pos: 9 },
+              { id: 'e2-s3-10', name: 'DAMARIS BELÉN CUSME MENDOZA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e2-row-4',
+            school: 'UE Camilo Ponce Enrique',
+            seatsLeft: [
+              { id: 'e2-s4-1', name: 'PALACIOS REYES SOLANGE YISLEY', pos: 1 },
+              { id: 'e2-s4-2', name: 'NARANJO CARRASCO ASHLEY ALEXANDRA', pos: 2 },
+              { id: 'e2-s4-3', name: 'MIRANDA QUIMIZ ARIANA VALESKA', pos: 3 },
+              { id: 'e2-s4-4', name: 'PATA LUCAS JEALENE TAIS', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e2-s4-6', name: 'FRANCO MACIAS BRITHANY XIOMARA', pos: 6 },
+              { id: 'e2-s4-7', name: 'ROSADO SANCHEZ BRITHANY JAMILETH', pos: 7 },
+              { id: 'e2-s4-8', name: 'ROLDAN SOZA DOMENICA DAYANNA', pos: 8 },
+              { id: 'e2-s4-9', name: 'MERO ALARCON SARA VALENTINA', pos: 9 },
+              { id: 'e2-s4-10', name: 'PILLIGUA BASURTO ALIS VICTORIA', pos: 10 },
+            ]
+          }
+        ];
+
+        const event3Data = [
+          {
+            id: 'e3-row-1',
+            school: 'UE Fiscal Cinco de Junio',
+            seatsLeft: [
+              { id: 'e3-s1-1', name: 'SORNOZA ZAMBRANO SHEYLA JEMINA', pos: 1 },
+              { id: 'e3-s1-2', name: 'MOREIRA MENDOZA WILSON JOSUE', pos: 2 },
+              { id: 'e3-s1-3', name: 'MARCILLO BRAVO KARLA MILEY', pos: 3 },
+              { id: 'e3-s1-4', name: 'MACIAS LUGO ELIAN ALEXANDER', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e3-s1-6', name: 'PIGUAVE PILOZO JOSE ANDRES', pos: 6 },
+              { id: 'e3-s1-7', name: 'GUANANGA CUZQUILLO ADRIAN SEBASTIAN', pos: 7 },
+              { id: 'e3-s1-8', name: 'RUPERTI SUAREZ DOMENICA IVETTE', pos: 8 },
+              { id: 'e3-s1-9', name: 'SORIANO BURBANO ILEANA NINETTE', pos: 9 },
+              { id: 'e3-s1-10', name: 'CEVALLOS MERINO DANNA SARELA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e3-row-2',
+            school: 'UE Fiscal Manta',
+            seatsLeft: [
+              { id: 'e3-s2-1', name: 'DELGADO PINCAY ALEXANDRA MONSERRATE', pos: 1 },
+              { id: 'e3-s2-2', name: 'ESCOBAR CEDEÑO DAVID JHADIER', pos: 2 },
+              { id: 'e3-s2-3', name: 'MENENDEZ CHAVEZ ADRIAN ALBERTO', pos: 3 },
+              { id: 'e3-s2-4', name: 'MUÑOZ ALCIVAR ASHLEY PIERINA', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e3-s2-6', name: 'ZAMBRANO SANCHEZ JURAIMA DANIELA', pos: 6 },
+              { id: 'e3-s2-7', name: 'VALDIVIEZO ARTEAGA ARELYS ALEXANDRA', pos: 7 },
+              { id: 'e3-s2-8', name: 'ZAMORA CEDEÑO JUAN SEBASTIAN', pos: 8 },
+              { id: 'e3-s2-9', name: 'CASTRO CLARKE MAQUINTAIRE BRAD DOMINIQUE', pos: 9 },
+              { id: 'e3-s2-10', name: 'QUIROZ LUCAS KARLA WALESKA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e3-row-3',
+            school: 'UE Fiscal 4 de Noviembre',
+            seatsLeft: [
+              { id: 'e3-s3-1', name: 'RAMOS CAYAMA NOHELY MARIANA', pos: 1 },
+              { id: 'e3-s3-2', name: 'CHAVARRIA CARREÑO ASHLEY ROMINA', pos: 2 },
+              { id: 'e3-s3-3', name: 'BARRE MERA ALIS LISETH', pos: 3 },
+              { id: 'e3-s3-4', name: 'MENDOZA VINCES KRISTEL DAMARIS', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e3-s3-6', name: 'MENDOZA VINCES BIANCA DAMARIS', pos: 6 },
+              { id: 'e3-s3-7', name: 'MOLINA LUCAS DAVID ISAAC', pos: 7 },
+              { id: 'e3-s3-8', name: 'MUÑIZ MERA INGRID ANAHI', pos: 8 },
+              { id: 'e3-s3-9', name: 'PICO DELGADO ANGELY VALERIA', pos: 9 },
+              { id: 'e3-s3-10', name: 'MERO BAILON SANTIAGO SMITH', pos: 10 },
+            ]
+          }
+        ];
+
+        const event4Data = [
+          {
+            id: 'e4-row-1',
+            school: 'UE Julio Pierregrosse',
+            seatsLeft: [
+              { id: 'e4-s1-1', name: 'DELGADO CHACON SAMUEL JOSE', pos: 1 },
+              { id: 'e4-s1-2', name: 'VARGAS CAICEDO MATHIAS JAVIER', pos: 2 },
+              { id: 'e4-s1-3', name: 'REYES DELGADO LUIS MATHEUS', pos: 3 },
+              { id: 'e4-s1-4', name: 'CEDEÑO DELGADO MARIA GABRIELA', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e4-s1-6', name: 'CASTELLANOS MUÑOZ BRAYDEN MIGUEL', pos: 6 },
+              { id: 'e4-s1-7', name: 'VELASQUEZ PONCE ROLANDO ADRIAN', pos: 7 },
+              { id: 'e4-s1-8', name: 'SANCHEZ DELGADO MARCELO RAPHAEL', pos: 8 },
+              { id: 'e4-s1-9', name: 'MOREIRA CHAVEZ GIOVANNA MILENKA', pos: 9 },
+              { id: 'e4-s1-10', name: 'GARCIA VALLE CESAR EMILIO', pos: 10 },
+            ]
+          },
+          {
+            id: 'e4-row-2',
+            school: 'UE Israel',
+            seatsLeft: [
+              { id: 'e4-s2-1', name: 'ORTEGA CONFORME RAFELLA VALENTINA', pos: 1 },
+              { id: 'e4-s2-2', name: 'ORDOÑEZ PAZMIÑO CAMILA ESTEFANÍA', pos: 2 },
+              { id: 'e4-s2-3', name: 'ORTIZ AVILA PAOLO XAVIER', pos: 3 },
+              { id: 'e4-s2-4', name: 'PARRAGA MOGROÑEDA ALLYSON EILENE', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e4-s2-6', name: 'LEITON MENDOZA DAIRA ABIGAIL', pos: 6 },
+              { id: 'e4-s2-7', name: 'ZAMORA CERÓN DEREK ISAAC', pos: 7 },
+              { id: 'e4-s2-8', name: 'OCHOA LIMONGI RICARDO', pos: 8 },
+              { id: 'e4-s2-9', name: 'BILBAO LA VIEJA FARFAN CARLOS EDUARDO', pos: 9 },
+              { id: 'e4-s2-10', name: 'PALMA FLORES YUSZETTY DAVID', pos: 10 },
+            ]
+          },
+          {
+            id: 'e4-row-3',
+            school: 'UE Fiscal Pedro Balda',
+            seatsLeft: [
+              { id: 'e4-s3-1', name: 'ZAMBRANO MOREIRA DANNA JUSMELY', pos: 1 },
+              { id: 'e4-s3-2', name: 'SANCHEZ GARCIA ESTHER ABIGAIL', pos: 2 },
+              { id: 'e4-s3-3', name: 'PONCE MERA MELANIE MONSERRATE', pos: 3 },
+              { id: 'e4-s3-4', name: 'MORAN ARAGUNDI KAREN GABRIELA', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e4-s3-6', name: 'SANCHEZ ALVARADO MEYSEE MAYTE', pos: 6 },
+              { id: 'e4-s3-7', name: 'MEZA TOALA JOSENKA DOMENICA', pos: 7 },
+              { id: 'e4-s3-8', name: 'BAJAÑA CEDEÑO DILEIDY JETSARI', pos: 8 },
+              { id: 'e4-s3-9', name: 'CARDENAS CEVALLOS ASHLEY JELITZA', pos: 9 },
+              { id: 'e4-s3-10', name: 'ZAMBRANO SABANDO DENISSE VALENTINA', pos: 10 },
+            ]
+          },
+          {
+            id: 'e4-row-4',
+            school: 'UE Fiscal Tarqui - Matutina',
+            seatsLeft: [
+              { id: 'e4-s4-1', name: 'ALCIVAR ESPINALES GEMA VALENTINA', pos: 1 },
+              { id: 'e4-s4-2', name: 'MERO ACOSTA JORGE LUIS', pos: 2 },
+              { id: 'e4-s4-3', name: 'BARRETO CATAGUA MISHELLE ANAHI', pos: 3 },
+              { id: 'e4-s4-4', name: 'BARRETO CHANCAY ALISSON DENISSE', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e4-s4-6', name: 'OLIVES ESPINALES LUCELY CHENOA', pos: 6 },
+              { id: 'e4-s4-7', name: 'DELGADO BURGOS ADOLFO DANIEL', pos: 7 },
+              { id: 'e4-s4-8', name: 'CASTRO FLORES MILENA MICHELLE', pos: 8 },
+              { id: 'e4-s4-9', name: 'LEONES BRAVO GILEYMA DARLEY', pos: 9 },
+              { id: 'e4-s4-10', name: 'BARRETO CHANCAY ALAN DAMIAN', pos: 10 },
+            ]
+          },
+          {
+            id: 'e4-row-5',
+            school: 'UE Fiscal Tarqui - Vespertina',
+            seatsLeft: [
+              { id: 'e4-s5-1', name: 'SUAREZ CEDEÑO MELANY MONSERRATE', pos: 1 },
+              { id: 'e4-s5-2', name: 'PAREDES VELEZ NAYELI ELIZABETH', pos: 2 },
+              { id: 'e4-s5-3', name: 'CEDEÑO PALMA MADAY ADAIS', pos: 3 },
+              { id: 'e4-s5-4', name: 'VERA CASTRO MARIA ISABEL', pos: 4 },
+            ],
+            hasRector: true,
+            seatsRight: [
+              { id: 'e4-s5-6', name: 'CHAVEZTA BAZURTO KEYLA PIERINA', pos: 6 },
+              { id: 'e4-s5-7', name: 'MACIAS MACIAS ANDREA CRISTINA', pos: 7 },
+              { id: 'e4-s5-8', name: 'LOPEZ LOOR DAMARIS JULIETH', pos: 8 },
+              { id: 'e4-s5-9', name: 'FIGUEROA ROMERO BRIANNA ANELIS', pos: 9 },
+              { id: 'e4-s5-10', name: 'PALMA SOLEDISPA EMELY NAHOMY', pos: 10 },
+            ]
+          }
+        ];
+
+        const EVENTS = [
+          { id: 1, name: 'Sesión 1: Matutina', data: event1Data, color: 'blue' },
+          { id: 2, name: 'Sesión 2: Matutina', data: event2Data, color: 'purple' },
+          { id: 3, name: 'Sesión 3: Vespertina', data: event3Data, color: 'emerald' },
+          { id: 4, name: 'Sesión 4: Vespertina', data: event4Data, color: 'orange' },
+        ];
+
+        // --- FUNCIONES DE EXPORTACIÓN ---
+
+        const exportToExcelHTML = (data, fileName) => {
+          const tableContent = `
+            <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+            <head>
+              <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+              <style>
+                table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+                th { background-color: #1e3a8a; color: white; border: 1px solid #000; padding: 10px; font-weight: bold; text-align: center; }
+                td { border: 1px solid #000; padding: 8px; vertical-align: middle; }
+                .presente { background-color: #dcfce7; color: #166534; font-weight: bold; text-align: center; }
+                .ausente { background-color: #fee2e2; color: #991b1b; text-align: center; }
+                .text-center { text-align: center; }
+              </style>
+            </head>
+            <body>
+              <table>
+                <thead>
+                  <tr>
+                    <th colspan="7" style="font-size: 16px; background-color: #f3f4f6; color: #000;">REPORTE DE ASISTENCIA - ABANDERADOS UTPL</th>
+                  </tr>
+                  <tr>
+                    <th>Evento</th>
+                    <th>Institución</th>
+                    <th>Fila</th>
+                    <th>Estudiante</th>
+                    <th>Asiento #</th>
+                    <th>Bloque</th>
+                    <th>Estado Asistencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.map(row => `
+                    <tr>
+                      <td>${row.eventName}</td>
+                      <td>${row.school}</td>
+                      <td class="text-center">${row.rowId}</td>
+                      <td>${row.name}</td>
+                      <td class="text-center">${row.pos}</td>
+                      <td class="text-center">${row.block}</td>
+                      <td class="${row.status === 'PRESENTE' ? 'presente' : 'ausente'}">${row.status}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </body>
+            </html>
+          `;
+
+          const blob = new Blob([tableContent], { type: 'application/vnd.ms-excel' });
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName.endsWith('.xls') ? fileName : `${fileName}.xls`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        };
+
+        const generateTextReport = (data) => {
+            const date = new Date().toLocaleString();
+            const total = data.length;
+            const presentes = data.filter(r => r.status === 'PRESENTE').length;
+            const ausentes = total - presentes;
             
+            let text = `📋 *REPORTE DE ASISTENCIA UTPL*\n📅 Fecha: ${date}\n✅ Presentes: ${presentes}\n❌ Ausentes: ${ausentes}\n\n*LISTADO DE ASISTENCIA:*\n`;
+            
+            // Agrupar por colegio para mejor lectura
+            const grouped = {};
+            data.forEach(r => {
+                if (!grouped[r.school]) grouped[r.school] = [];
+                grouped[r.school].push(r);
+            });
+
+            Object.keys(grouped).forEach(school => {
+                text += `\n🏫 *${school}*\n`;
+                grouped[school].forEach(r => {
+                    const icon = r.status === 'PRESENTE' ? '✅' : '❌';
+                    text += `${icon} ${r.name} (Asiento ${r.pos})\n`;
+                });
+            });
+
+            return text;
+        };
+
+        const copyToClipboard = (text) => {
+            const textarea = document.createElement("textarea");
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textarea);
+            alert("¡Reporte copiado! Ahora puedes pegarlo en WhatsApp o Correo.");
+        };
+
+        const handlePrint = () => {
+            window.print();
+        };
+
+        // --- COMPONENTES ---
+
+        const EventSelector = ({ onSelectEvent, onExportGlobal }) => {
+          return (
+            <div className="min-h-screen bg-gray-50 font-sans text-slate-800 flex flex-col no-print">
+              <header className="bg-blue-900 text-white p-6 shadow-lg">
+                <div className="max-w-4xl mx-auto text-center">
+                  <h1 className="text-3xl font-bold text-yellow-400">UTPL - Gestión de Eventos</h1>
+                  <p className="text-blue-200 mt-2">Seleccione la sesión para gestionar los asientos</p>
+                </div>
+              </header>
+
+              <main className="flex-grow p-6 flex flex-col items-center justify-center">
+                <div className="w-full max-w-4xl mb-8 flex flex-col md:flex-row justify-end gap-3">
+                   <button 
+                     onClick={handlePrint}
+                     className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-xl shadow-md font-bold flex items-center justify-center gap-2 transition-transform hover:-translate-y-1"
+                   >
+                      <Printer size={20} />
+                      Imprimir Lista
+                   </button>
+                   <button 
+                     onClick={onExportGlobal}
+                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl shadow-md font-bold flex items-center justify-center gap-2 transition-transform hover:-translate-y-1"
+                   >
+                      <FileSpreadsheet size={24} />
+                      Descargar Reporte General (.xls)
+                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl w-full">
+                  {EVENTS.map((evt) => (
+                    <button
+                      key={evt.id}
+                      onClick={() => onSelectEvent(evt)}
+                      className={`
+                        group relative overflow-hidden p-8 rounded-2xl shadow-md border-2 text-left transition-all hover:shadow-xl hover:-translate-y-1
+                        ${evt.color === 'blue' ? 'bg-white border-blue-100 hover:border-blue-500' : ''}
+                        ${evt.color === 'purple' ? 'bg-white border-purple-100 hover:border-purple-500' : ''}
+                        ${evt.color === 'emerald' ? 'bg-white border-emerald-100 hover:border-emerald-500' : ''}
+                        ${evt.color === 'orange' ? 'bg-white border-orange-100 hover:border-orange-500' : ''}
+                      `}
+                    >
+                      <div className={`
+                        absolute top-0 right-0 p-3 rounded-bl-2xl text-white font-bold text-xl opacity-20 group-hover:opacity-100 transition-opacity
+                        ${evt.color === 'blue' ? 'bg-blue-500' : ''}
+                        ${evt.color === 'purple' ? 'bg-purple-500' : ''}
+                        ${evt.color === 'emerald' ? 'bg-emerald-500' : ''}
+                        ${evt.color === 'orange' ? 'bg-orange-500' : ''}
+                      `}>
+                        #{evt.id}
+                      </div>
+
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className={`
+                          p-3 rounded-full 
+                          ${evt.color === 'blue' ? 'bg-blue-100 text-blue-600' : ''}
+                          ${evt.color === 'purple' ? 'bg-purple-100 text-purple-600' : ''}
+                          ${evt.color === 'emerald' ? 'bg-emerald-100 text-emerald-600' : ''}
+                          ${evt.color === 'orange' ? 'bg-orange-100 text-orange-600' : ''}
+                        `}>
+                          <Calendar size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800">{evt.name}</h2>
+                      </div>
+                      
+                      <p className="text-gray-500 mb-6 pl-1">
+                        {evt.data.length} Filas registradas.
+                        Gestionar asientos y asistencia.
+                      </p>
+
+                      <div className="flex items-center text-sm font-semibold text-gray-400 group-hover:text-gray-800 transition-colors">
+                        Ingresar al evento <ChevronRight size={16} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </main>
+            </div>
+          );
+        };
+
+        // --- COMPONENTE ASIENTO ---
+        const Seat = ({ seat, isSelected, isChecked, isDimmed, onClick }) => {
+          const isVacant = seat.name === 'VACANTE';
+
+          if (isVacant) {
+              return <div className="w-12 h-12 m-1 opacity-0 pointer-events-none"></div>;
+          }
+
+          let iconClass = "text-blue-200 fill-blue-50"; 
+          let containerClass = "hover:scale-110";
+
+          if (isSelected) {
+            iconClass = "text-yellow-500 fill-yellow-200 drop-shadow-md";
+            containerClass = "scale-125 z-10";
+          } else if (isChecked) {
+             if (isDimmed) {
+                iconClass = "text-green-200 fill-green-50";
+                containerClass = "";
+             } else {
+                iconClass = "text-green-600 fill-green-100";
+             }
+          } else if (isDimmed) {
+             iconClass = "text-gray-200 fill-gray-50";
+             containerClass = "";
+          }
+
+          return (
+            <div 
+              onClick={onClick}
+              className={`relative flex flex-col items-center justify-center p-1 transition-all duration-300 cursor-pointer ${containerClass}`}
+              title={`${seat.name} - Asiento ${seat.pos}`}
+            >
+              <ChairIcon size={38} className={iconClass} fill={isChecked || isSelected ? "currentColor" : "none"} />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-white border border-gray-200 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-600 shadow-sm z-20">
+                {seat.pos}
+              </div>
+               {isChecked && !isSelected && !isDimmed && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                     <CheckCircle size={22} className="text-green-700 bg-white rounded-full p-0.5 shadow-sm" fill="currentColor"/>
+                  </div>
+               )}
+            </div>
+          );
+        };
+
+        const EventWorkspace = ({ event, checkedStudents, onToggleAttendance, onGoHome, onExportEvent }) => {
+          const [searchTerm, setSearchTerm] = useState('');
+          const [selectedStudent, setSelectedStudent] = useState(null);
+          const seatingData = event.data;
+
+          const normalizeText = (text) => {
+            return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          };
+
+          const searchResults = useMemo(() => {
+            if (!searchTerm || searchTerm.length < 2) return [];
+            
+            const normalizedTerm = normalizeText(searchTerm);
+            const searchTerms = normalizedTerm.split(" ").filter(t => t.length > 0);
+            
+            let results = [];
+            seatingData.forEach(row => {
+              const processSeat = (seat, block) => {
+                if (seat.name === 'VACANTE') return;
+                
+                const normalizedName = normalizeText(seat.name);
+                const isMatch = searchTerms.every(term => normalizedName.includes(term));
+                
+                if (isMatch) {
+                  results.push({ ...seat, school: row.school, rowId: row.id, block });
+                }
+              };
+
+              row.seatsLeft.forEach(s => processSeat(s, 'Izquierda'));
+              row.seatsRight.forEach(s => processSeat(s, 'Derecha'));
+            });
+            return results;
+          }, [searchTerm, seatingData]);
+
+          const handleSelectStudent = (student) => {
+            setSelectedStudent(student);
+            setSearchTerm('');
+            const mapElement = document.getElementById('map-view');
             setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove());
-            }, 3000); // 3 segundos
-        };
+               if(mapElement) mapElement.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+          };
 
-        // --- 3. CÁLCULOS PRINCIPALES ---
-        const calculateTotals = () => {
-            // Totales Fijos
-            const totalFixedIncome = fixedIncomes.reduce((acc, t) => acc + t.amount, 0); 
-            const totalFixedExpense = fixedExpenses.reduce((acc, t) => acc + t.amount, 0);
-            
-            // Cálculos para la VISIÓN RÁPIDA (Solo el mes actual)
-            const monthlyVariable = variableTransactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                // La transacción debe pertenecer al mes actual Y no haber ocurrido en el futuro.
-                return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === currentMonthKey && transactionDate <= today;
-            });
-            
-            // Cálculo de Ahorro Histórico Acumulado (hasta el mes pasado)
-            let historicalSavings = 0;
-            
-            // Vamos desde el año 2020 (o el año más antiguo en transacciones) hasta el año actual
-            const transactionYears = variableTransactions.map(t => new Date(t.date).getFullYear());
-            const minYear = transactionYears.length > 0 ? Math.min(...transactionYears, currentYear) : currentYear;
+          const clearSelection = () => {
+            setSelectedStudent(null);
+            setSearchTerm('');
+          };
 
-            for (let year = minYear; year <= currentYear; year++) { 
-                for (let month = 0; month < 12; month++) {
-                    const monthKey = `${year}-${month}`;
-                    
-                    // Solo sumar si el mes es completamente pasado
-                    if (year === currentYear && month >= currentMonthNumber) break; 
-                    
-                    const monthlyVariableHistoric = variableTransactions.filter(t => {
-                        const transactionDate = new Date(t.date);
-                        return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
-                    });
-                    
-                    const monthlyVarIncomeHistoric = monthlyVariableHistoric.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
-                    const monthlyVarExpenseHistoric = monthlyVariableHistoric.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
-                    
-                    const savingForMonth = (totalFixedIncome + monthlyVarIncomeHistoric) - (totalFixedExpense + monthlyVarExpenseHistoric);
-                    historicalSavings += savingForMonth;
-                }
+          const currentEventStudentIds = useMemo(() => {
+             const ids = new Set();
+             seatingData.forEach(row => {
+               row.seatsLeft.forEach(s => ids.add(s.id));
+               row.seatsRight.forEach(s => ids.add(s.id));
+             });
+             return ids;
+          }, [seatingData]);
+          
+          const checkedArray = useMemo(() => {
+            try {
+                return [...checkedStudents];
+            } catch(e) {
+                return [];
             }
+          }, [checkedStudents]);
 
+          const eventAttendanceCount = checkedArray.filter(id => currentEventStudentIds.has(id)).length;
 
-            const totalVariableIncome = monthlyVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
-            const totalVariableExpense = monthlyVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
-            
-            // Flujo Neto Mensual (Incluye todo el mes actual)
-            const netSavingPerMonth = (totalFixedIncome + totalVariableIncome) - (totalFixedExpense + totalVariableExpense);
-            
-            // Proyección Anual con Ahorro Histórico como base
-            // Mes actual (1) + meses restantes del año (12 - mes actual - 1)
-            const remainingMonthsForProjection = 12 - currentMonthNumber; // Meses restantes INCLUYENDO el actual
-            const projectedFutureMonths = 12 - remainingMonthsForProjection; // Meses que ya pasaron
-            
-            // El flujo neto fijo (Ingreso Fijo - Gasto Fijo) es lo que se proyecta para los meses futuros.
-            const netFixedFlow = totalFixedIncome - totalFixedExpense;
-            const projectedNetFlowThisYear = netFixedFlow * (12 - currentMonthNumber); 
-            
-            // Total Anual Proyectado (base histórica hasta mes pasado + (flujo neto fijo * meses restantes, asumiendo variables futuras = 0))
-            const totalAnnualProjection = historicalSavings + (netFixedFlow * (12 - currentMonthNumber));
+          const getEventDataForReport = () => {
+              let reportData = [];
+              event.data.forEach(row => {
+                row.seatsLeft.forEach(seat => {
+                  if (seat.name !== 'VACANTE') {
+                    reportData.push({
+                      eventName: event.name,
+                      school: row.school,
+                      rowId: row.id.split('-row-')[1] || row.id,
+                      name: seat.name,
+                      pos: seat.pos,
+                      block: 'Izquierda',
+                      status: checkedStudents.has(seat.id) ? 'PRESENTE' : 'AUSENTE'
+                    });
+                  }
+                });
+                row.seatsRight.forEach(seat => {
+                  if (seat.name !== 'VACANTE') {
+                    reportData.push({
+                      eventName: event.name,
+                      school: row.school,
+                      rowId: row.id.split('-row-')[1] || row.id,
+                      name: seat.name,
+                      pos: seat.pos,
+                      block: 'Derecha',
+                      status: checkedStudents.has(seat.id) ? 'PRESENTE' : 'AUSENTE'
+                    });
+                  }
+                });
+              });
+              return reportData;
+          };
 
+          const handleCopyReport = () => {
+              const data = getEventDataForReport();
+              const text = generateTextReport(data);
+              copyToClipboard(text);
+          };
 
-            return {
-                totalFixedIncome, totalFixedExpense,
-                totalVariableIncome, totalVariableExpense,
-                netSavingPerMonth, 
-                totalAnnualProjection, // Este KPI debe ser el histórico + proyección Fija hasta fin de año
-                historicalSavings,
-                totalNetBalance: netSavingPerMonth // Flujo neto del mes actual (Fijos + Variables del mes)
-            };
-        };
+          return (
+            <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-slate-800">
+              <header className="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50 no-print">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button 
+                      onClick={onGoHome}
+                      className="p-2 hover:bg-blue-800 rounded-lg transition-colors flex items-center gap-2 text-sm text-blue-200 hover:text-white"
+                    >
+                      <ArrowLeft size={20} />
+                      <span className="hidden md:inline">Eventos</span>
+                    </button>
+                    <div className="h-8 w-px bg-blue-700 mx-2"></div>
+                    <div>
+                      <h1 className="text-xl font-bold text-yellow-400">UTPL - {event.name}</h1>
+                      <p className="text-xs text-blue-200">Organizador de Asientos</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                     <button
+                       onClick={handleCopyReport}
+                       className="p-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white transition-colors flex items-center gap-2 text-sm shadow-sm"
+                       title="Copiar lista para WhatsApp/Email"
+                     >
+                        <Copy size={18} />
+                        <span className="hidden md:inline">Copiar</span>
+                     </button>
+                     
+                     <button
+                       onClick={onExportEvent}
+                       className="p-2 bg-green-600 hover:bg-green-700 rounded-lg text-white transition-colors flex items-center gap-2 text-sm shadow-sm"
+                       title="Exportar Lista a Excel"
+                     >
+                        <Download size={18} />
+                        <span className="hidden md:inline">Excel</span>
+                     </button>
 
-        const updateUI = () => {
-            const totals = calculateTotals();
-
-            // 1. Actualizar KPIs
-            document.getElementById('fixed-income-total').innerHTML = formatCurrency(totals.totalFixedIncome); 
-            document.getElementById('fixed-expense').innerHTML = formatCurrency(totals.totalFixedExpense);
-            document.getElementById('total-variable-income').innerHTML = formatCurrency(totals.totalVariableIncome);
-            document.getElementById('total-variable-expense').innerHTML = formatCurrency(totals.totalVariableExpense);
-            document.getElementById('net-saving-per-month').innerHTML = formatCurrency(totals.totalNetBalance);
-            
-            // El Capital Proyectado (12 meses) es el flujo fijo proyectado
-            document.getElementById('annual-projection').innerHTML = formatCurrency(totals.totalAnnualProjection); 
-            document.getElementById('historical-savings').innerHTML = formatCurrency(totals.historicalSavings);
-            
-            // 2. Metas y Proyección
-            document.getElementById('current-goal-amount').textContent = formatCurrency(goal).replace(/<\/?span[^>]*>/g, ''); 
-            
-            const {timeString, completionMonth} = calculateTimeToGoal(totals.netSavingPerMonth, totals.historicalSavings);
-            document.getElementById('time-to-goal').textContent = timeString;
-            document.getElementById('projected-completion-month').textContent = completionMonth;
-            document.getElementById('time-to-goal').style.color = totals.netSavingPerMonth > 0 ? 'var(--color-income)' : (totals.netSavingPerMonth < 0 ? 'var(--color-expense)' : 'var(--color-text)');
-            
-            // 3. Renderizado de Componentes
-            renderLists(); // Llama a renderLists con los filtros aplicados
-            renderProjectionLedger(totals);
-            updateGoalProgress(totals.netSavingPerMonth, totals.historicalSavings);
-            updateCharts(totals);
-            
-            // 4. Actualizar Calculadora de Flujos Fijos
-            const netFlowFijo = totals.totalFixedIncome - totals.totalFixedExpense;
-            document.getElementById('calc-income').innerHTML = formatCurrency(totals.totalFixedIncome).replace(/<\/?span[^>]*>/g, '');
-            document.getElementById('calc-expense').innerHTML = formatCurrency(totals.totalFixedExpense).replace(/<\/?span[^>]*>/g, '');
-            document.getElementById('calc-net-flow').innerHTML = formatCurrency(netFlowFijo);
-
-
-            saveData();
-        };
-
-        // --- 4. CÁLCULO DE TIEMPO A META ---
-        const calculateTimeToGoal = (netSavingPerMonth, historicalSavings) => {
-            const neededAmount = goal - historicalSavings;
-            let timeString = "---";
-            let completionMonth = "N/A";
-
-            if (goal <= 0) return {timeString: "Define una meta", completionMonth: "N/A"};
-            if (neededAmount <= 0) return {timeString: "¡Meta ya alcanzada!", completionMonth: "✅"};
-            
-            // Usamos el flujo neto del mes actual, asumiendo que se mantendrá.
-            if (netSavingPerMonth <= 0) return {timeString: "🚨 ¡Ahorro Negativo!", completionMonth: "Nunca"};
-
-            const months = neededAmount / netSavingPerMonth;
-            const totalMonths = Math.ceil(months);
-            
-            const years = Math.floor(months / 12);
-            const remainingMonths = Math.round(months % 12); 
-            
-            let result = [];
-            if (years > 0) result.push(`${years} año${years > 1 ? 's' : ''}`);
-            if (remainingMonths > 0 || years === 0 && months > 0) result.push(`${remainingMonths} mes${remainingMonths !== 1 ? 'es' : ''}`);
-
-            timeString = result.length > 0 ? result.join(' y ') : "Menos de 1 mes!";
-            
-            // Cálculo del mes de conclusión:
-            let futureDate = new Date();
-            // Restablecer al inicio del mes actual para una proyección más limpia
-            futureDate.setDate(1); 
-            futureDate.setMonth(futureDate.getMonth() + totalMonths);
-            completionMonth = `${monthsNames[futureDate.getMonth()]} ${futureDate.getFullYear()}`;
-
-            return {timeString, completionMonth};
-        };
-        
-        // --- 5. RENDERIZADO DEL LEDGER ESTRATÉGICO (CORREGIDO) ---
-        const renderProjectionLedger = (totals) => {
-            const ledgerEl = document.getElementById('projection-ledger');
-            ledgerEl.innerHTML = '';
-            
-            // Encabezados
-            const header = ledgerEl.createTHead();
-            const row = header.insertRow();
-            ['Período', 'Ingresos Fijos', 'Gastos Fijos', 'Ingreso Variable', 'Gasto Variable', 'Flujo Neto', 'Ahorro Acumulado'].forEach(text => {
-                const th = document.createElement('th');
-                th.textContent = text;
-                row.appendChild(th);
-            });
-
-            const body = ledgerEl.createTBody();
-            let cumulativeSavingAtEnd = 0; 
-            let metaAlcanzada = false;
-            const totalFixedIncome = totals.totalFixedIncome; 
-            const totalFixedExpense = totals.totalFixedExpense;
-            
-            // Determinar rango de años
-            const transactionYears = variableTransactions.map(t => new Date(t.date).getFullYear());
-            const minYear = transactionYears.length > 0 ? Math.min(...transactionYears, currentYear) : currentYear;
-            const maxYear = currentYear + 3;
-
-            const allMonthlyData = {};
-
-            // 1. Calcular el flujo de cada mes (Histórico y Proyectado)
-            for (let year = minYear; year <= maxYear; year++) {
-                allMonthlyData[year] = {};
-                for (let month = 0; month < 12; month++) {
-                    const monthKey = `${year}-${month}`;
+                    <div className="hidden md:flex flex-col items-end mr-4">
+                        <span className="text-xs text-blue-200 font-semibold">ASISTENCIA</span>
+                        <span className="text-xl font-bold text-white flex items-center gap-2">
+                            <Users size={18} /> {eventAttendanceCount}
+                        </span>
+                    </div>
                     
-                    let monthlyVarIncome = 0;
-                    let monthlyVarExpense = 0;
-                    
-                    // Solo usamos variables para meses que ya pasaron o el mes actual
-                    if (year < currentYear || (year === currentYear && month <= currentMonthNumber)) {
-                        const monthlyVariable = variableTransactions.filter(t => {
-                            const transactionDate = new Date(t.date);
-                            return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
-                        });
-                        monthlyVarIncome = monthlyVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
-                        monthlyVarExpense = monthlyVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
+                    {selectedStudent && (
+                        <button 
+                        onClick={clearSelection}
+                        className="text-sm bg-blue-800 hover:bg-blue-700 px-3 py-2 rounded flex items-center gap-1 transition-colors border border-blue-700"
+                        >
+                        <X size={16} /> Limpiar
+                        </button>
+                    )}
+                  </div>
+                </div>
+              </header>
+
+              {/* VISTA SOLO PARA IMPRESIÓN */}
+              <div className="print-only p-8">
+                  <h1 className="text-2xl font-bold text-center mb-4">REPORTE DE ASISTENCIA - {event.name}</h1>
+                  <p className="text-center mb-6">Fecha: {new Date().toLocaleDateString()}</p>
+                  
+                  <div className="grid grid-cols-2 gap-8">
+                      {event.data.map(row => (
+                          <div key={row.id} className="mb-4 break-inside-avoid">
+                              <h3 className="font-bold border-b border-black mb-2">{row.school}</h3>
+                              <ul className="text-sm">
+                                  {row.seatsLeft.concat(row.seatsRight).filter(s => s.name !== 'VACANTE').map(s => (
+                                      <li key={s.id} className="flex justify-between py-1 border-b border-gray-100">
+                                          <span>{s.name}</span>
+                                          <span className="font-bold">{checkedStudents.has(s.id) ? '✅' : '❌'}</span>
+                                      </li>
+                                  ))}
+                              </ul>
+                          </div>
+                      ))}
+                  </div>
+              </div>
+
+              <main className="flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full no-print">
+                {/* Panel de Búsqueda */}
+                <div className="mb-6 max-w-3xl mx-auto relative z-40">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder={`Buscar en ${event.name}...`}
+                      className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-blue-100 shadow-lg focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 focus:outline-none text-lg transition-all"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <Search size={24} />
+                    </div>
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div className="absolute mt-2 w-full bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden max-h-[60vh] overflow-y-auto">
+                      {searchResults.map((student) => {
+                        const isChecked = checkedStudents.has(student.id);
+                        return (
+                          <button
+                            key={student.id}
+                            onClick={() => handleSelectStudent(student)}
+                            className="w-full text-left px-6 py-4 hover:bg-blue-50 border-b border-gray-50 last:border-0 flex justify-between items-center group transition-colors"
+                          >
+                            <div>
+                              <p className="font-bold text-gray-800 group-hover:text-blue-900 flex items-center gap-2">
+                                {student.name}
+                                {isChecked && <CheckCircle size={16} className="text-green-500" fill="#dcfce7"/>}
+                              </p>
+                              <p className="text-xs text-gray-500">{student.school}</p>
+                            </div>
+                            <span className="text-xs font-semibold bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                              Asiento {student.pos}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Panel Detalle Estudiante */}
+                {selectedStudent ? (
+                  <div className="mb-8 bg-white border-l-8 border-yellow-400 p-6 rounded-r-xl shadow-md max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="bg-yellow-100 p-3 rounded-full text-yellow-700">
+                        <User size={32} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-sm text-gray-500 uppercase tracking-wide flex items-center gap-2">
+                            Estudiante Seleccionado
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full border border-yellow-200">
+                                Seleccionado en Mapa
+                            </span>
+                        </h3>
+                        <p className="text-2xl font-bold text-gray-900 leading-tight mt-1">{selectedStudent.name}</p>
                         
-                    } 
-                    
-                    // Nota: Para meses futuros, monthlyVarIncome/Expense es 0, por lo que el Flujo Neto será solo el Flujo Fijo.
-                    const savingForMonth = (totalFixedIncome + monthlyVarIncome) - (totalFixedExpense + monthlyVarExpense);
-                    
-                    allMonthlyData[year][month] = {
-                        monthName: monthsNames[month],
-                        fixedIncome: totalFixedIncome,
-                        fixedExpense: totalFixedExpense,
-                        varIncome: monthlyVarIncome,
-                        varExpense: monthlyVarExpense,
-                        netSaving: savingForMonth,
-                        isCurrent: year === currentYear && month === currentMonthNumber
-                    };
-                }
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-gray-400 uppercase">Fila / Institución</span>
+                                <span className="font-bold text-blue-900 text-lg leading-tight">{selectedStudent.school}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Asiento</span>
+                                    <span className="font-bold text-blue-900 text-lg">#{selectedStudent.pos}</span>
+                                </div>
+                                <div className="w-px h-8 bg-gray-300"></div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-gray-400 uppercase">Bloque</span>
+                                    <span className="font-bold text-gray-700 text-lg">{selectedStudent.block}</span>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 w-full md:w-auto">
+                       <button
+                         onClick={() => onToggleAttendance(selectedStudent.id)}
+                         className={`w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all transform active:scale-95 shadow-lg
+                           ${checkedStudents.has(selectedStudent.id) 
+                             ? 'bg-green-100 text-green-700 border-2 border-green-500 hover:bg-green-200' 
+                             : 'bg-yellow-400 text-yellow-900 border-2 border-yellow-500 hover:bg-yellow-300 hover:shadow-yellow-200'
+                           }`}
+                       >
+                         {checkedStudents.has(selectedStudent.id) ? (
+                           <React.Fragment>
+                             <CheckCircle size={24} className="text-green-600" />
+                             ¡Presente!
+                           </React.Fragment>
+                         ) : (
+                           <React.Fragment>
+                             <div className="w-6 h-6 rounded-full border-2 border-yellow-800"></div>
+                             Marcar Asistencia
+                           </React.Fragment>
+                         )}
+                       </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-8 text-center bg-blue-50 p-4 rounded-xl border border-blue-100 max-w-2xl mx-auto animate-pulse">
+                     <p className="text-blue-800 font-medium flex items-center justify-center gap-2">
+                       <MousePointerClick size={18} />
+                       Haz clic en un asiento del mapa o usa el buscador para ver detalles.
+                     </p>
+                  </div>
+                )}
+
+                {/* MAPA GRÁFICO (MODIFICADO: Ajuste de alineación y gap) */}
+                <div id="map-view" className="bg-white p-4 md:p-8 rounded-2xl shadow-xl border border-gray-200 overflow-x-auto relative">
+                  <div className="min-w-[500px] mx-auto">
+                    <div className="w-full bg-gray-800 text-gray-300 h-16 rounded-lg mb-10 flex flex-col items-center justify-center font-bold tracking-widest text-sm uppercase shadow-lg border-b-4 border-yellow-500">
+                      <span>ESCENARIO</span>
+                      <span className="text-[10px] font-normal text-gray-400">{event.name}</span>
+                    </div>
+
+                    {/* Encabezado: Ahora usa gap-1 y padding igual que las filas */}
+                    <div className="flex mb-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider w-full">
+                       <div className="w-28 flex-shrink-0"></div>
+                       {/* Columnas Izquierda - gap-1 para alinear con asientos */}
+                       <div className="flex-grow-[4] basis-0 grid grid-cols-4 gap-1 mr-1">
+                         {[1,2,3,4].map(n => <div key={n}>A{n}</div>)}
+                       </div>
+                       <div className="w-14 text-center"></div>
+                       <div className="w-12"></div>
+                       {/* Columnas Derecha - gap-1 para alinear con asientos */}
+                       <div className="flex-grow-[5] basis-0 grid grid-cols-5 gap-1 ml-2">
+                         {[6,7,8,9,10].map(n => <div key={n}>A{n}</div>)}
+                       </div>
+                    </div>
+
+                    <div className="space-y-6 pb-48">
+                      {seatingData.map((row) => (
+                        <div key={row.id} className="flex items-center group w-full"> {/* items-center asegura centrado vertical */}
+                          <div className={`w-28 flex-shrink-0 flex items-center pr-4 font-bold text-sm border-r-2 border-gray-100 ${
+                            selectedStudent?.rowId === row.id ? 'text-blue-800' : 'text-gray-500'
+                          }`}>
+                            {row.school}
+                          </div>
+
+                          {/* Asientos Izquierda - gap-1 y mr-1 para alinear con encabezado */}
+                          <div className="flex-grow-[4] basis-0 grid grid-cols-4 gap-1 mr-1">
+                            {row.seatsLeft.map((seat) => (
+                              <Seat 
+                                key={seat.id} 
+                                seat={seat} 
+                                isSelected={selectedStudent?.id === seat.id}
+                                isChecked={checkedStudents.has(seat.id)}
+                                isDimmed={selectedStudent && selectedStudent.id !== seat.id}
+                                onClick={() => handleSelectStudent({...seat, school: row.school, rowId: row.id, block: 'Izquierda'})}
+                              />
+                            ))}
+                          </div>
+
+                          <div className="w-14 flex items-center justify-center flex-shrink-0">
+                            {row.hasRector && (
+                              <div className="w-full py-1 bg-slate-100 rounded border border-slate-200 flex items-center justify-center">
+                                 <span className="text-[8px] text-slate-400 font-bold rotate-0">RECTOR</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="w-12 flex items-center justify-center relative flex-shrink-0">
+                            <div className="absolute inset-y-0 left-1/2 border-l-2 border-dashed border-gray-200"></div>
+                          </div>
+
+                          {/* Asientos Derecha - gap-1 y ml-2 para alinear con encabezado */}
+                          <div className="flex-grow-[5] basis-0 grid grid-cols-5 gap-1 ml-2">
+                            {row.seatsRight.map((seat) => (
+                              <Seat 
+                                key={seat.id} 
+                                seat={seat} 
+                                isSelected={selectedStudent?.id === seat.id}
+                                isChecked={checkedStudents.has(seat.id)}
+                                isDimmed={selectedStudent && selectedStudent.id !== seat.id}
+                                onClick={() => handleSelectStudent({...seat, school: row.school, rowId: row.id, block: 'Derecha'})}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="fixed bottom-6 right-6 md:absolute md:bottom-4 md:right-4 bg-white/95 backdrop-blur shadow-xl border border-gray-200 p-4 rounded-xl text-xs space-y-2 z-50">
+                       <h4 className="font-bold text-gray-800 mb-2">Leyenda del Mapa</h4>
+                       <div className="flex items-center gap-2">
+                         <div className="w-4 h-4 rounded bg-white border-2 border-blue-200"></div>
+                         <span>Libre (Clic para seleccionar)</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <div className="w-4 h-4 rounded bg-yellow-300 border-2 border-yellow-500"></div>
+                         <span>Seleccionado</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                         <div className="w-4 h-4 rounded bg-green-500 border-2 border-green-600 shadow-sm"></div>
+                         <span className="font-bold text-green-700">Asistencia Confirmada</span>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
+            </div>
+          );
+        };
+
+        const AbanderadosApp = () => {
+          const [activeEvent, setActiveEvent] = useState(null);
+          
+          const [checkedStudents, setCheckedStudents] = useState(() => {
+            return safeLoadStorage('utpl_asistencia_v2');
+          });
+
+          useEffect(() => {
+            try {
+                const dataToSave = [...checkedStudents];
+                localStorage.setItem('utpl_asistencia_v2', JSON.stringify(dataToSave));
+            } catch(e) {
+                console.error("Error guardando datos:", e);
             }
+          }, [checkedStudents]);
 
+          const toggleAttendance = (studentId) => {
+            setCheckedStudents(prev => {
+              const newSet = new Set(prev);
+              if (newSet.has(studentId)) {
+                newSet.delete(studentId);
+              } else {
+                newSet.add(studentId);
+              }
+              return newSet;
+            });
+          };
 
-            // 2. Renderizar el Ledger por año
-            
-            // El acumulado debe empezar con el valor de ahorro acumulado hasta el mes anterior al inicio del ledger.
-            let cumulativeSaving = totals.historicalSavings; // Ahorro total hasta el mes pasado.
+          const handleSelectEvent = (event) => {
+            setActiveEvent(event);
+          };
 
-            // El resumen del primer año (Min Year) debe incluir el acumulado del año pasado si es un año anterior al actual.
-            if (minYear < currentYear) {
-                // Si el año mínimo es pasado, necesitamos calcular el acumulado de ese año en el loop.
-                cumulativeSaving = 0; // Se recalcula desde 0
-            }
+          const goHome = () => {
+            setActiveEvent(null);
+          };
 
+          const generateReport = (eventId = null) => {
+            let reportData = [];
+            const eventsToProcess = eventId ? EVENTS.filter(e => e.id === eventId) : EVENTS;
 
-            for (let year = minYear; year <= maxYear; year++) {
-                
-                let yearNetSavingTotal = 0;
-                let yearVarIncomeTotal = 0;
-                let yearVarExpenseTotal = 0;
-                
-                // 2.1 Calcular totales de resumen del AÑO
-                for (let month = 0; month < 12; month++) {
-                    const data = allMonthlyData[year][month];
-                    
-                    // Solo sumar lo que es relevante para la proyección total a final de año.
-                    if (year < currentYear) {
-                        // Años Pasados: Suma los 12 meses históricos.
-                        yearNetSavingTotal += data.netSaving;
-                        yearVarIncomeTotal += data.varIncome;
-                        yearVarExpenseTotal += data.varExpense;
-                    } else if (year === currentYear) {
-                        // Año Actual: Solo suma hasta el mes actual.
-                        if (month <= currentMonthNumber) {
-                            yearNetSavingTotal += data.netSaving;
-                            yearVarIncomeTotal += data.varIncome;
-                            yearVarExpenseTotal += data.varExpense;
-                        }
-                    } else {
-                        // Años Futuros: Suma los 12 meses proyectados (flujo fijo).
-                         yearNetSavingTotal += data.netSaving;
-                         yearVarIncomeTotal += data.varIncome;
-                         yearVarExpenseTotal += data.varExpense;
-                    }
-                }
-                
-                // Si el año mínimo es pasado, actualiza el acumulado inicial con el flujo neto del año pasado
-                if (year === minYear && minYear < currentYear) {
-                    cumulativeSaving = yearNetSavingTotal;
-                } else {
-                    cumulativeSaving += yearNetSavingTotal; 
-                }
-
-                // Renderizar Fila de Resumen Anual
-                const trSummary = body.insertRow();
-                trSummary.classList.add('meta-alcanzada'); 
-                trSummary.id = `summary-${year}`;
-                trSummary.style.cursor = 'pointer'; 
-                
-                // Los Ingresos/Gastos Fijos mostrados deben ser los 12 meses, proyectados o reales
-                const summaryFixedIncome = (year < currentYear) ? totalFixedIncome * 12 : (year === currentYear ? totalFixedIncome * (currentMonthNumber + 1) : totalFixedIncome * 12);
-                const summaryFixedExpense = (year < currentYear) ? totalFixedExpense * 12 : (year === currentYear ? totalFixedExpense * (currentMonthNumber + 1) : totalFixedExpense * 12);
-                
-                const dataSummary = [
-                    `<i class="fas fa-chevron-right year-toggle" id="toggle-icon-${year}"></i> TOTAL AHORRO ${year}`,
-                    summaryFixedIncome,
-                    summaryFixedExpense,
-                    yearVarIncomeTotal,
-                    yearVarExpenseTotal,
-                    yearNetSavingTotal,
-                    cumulativeSaving
-                ];
-
-                dataSummary.forEach((val, index) => {
-                    const td = trSummary.insertCell();
-                    if (index > 0) {
-                        td.innerHTML = formatCurrency(val);
-                    } else {
-                        td.innerHTML = val;
-                        td.style.textAlign = 'left';
-                    }
-                    if (index === 6) { td.classList.add('accumulated-saving'); }
-                    
-                    if (index === 6 && goal > 0 && cumulativeSaving >= goal && !metaAlcanzada) {
-                        // Solo marcar la primera vez que se alcanza la meta
-                        td.classList.add('meta-alcanzada');
-                        metaAlcanzada = true; 
-                    }
-                });
-                
-                // Manejador para colapsar/expandir
-                trSummary.onclick = () => {
-                    const detailRows = document.querySelectorAll(`.detail-row-${year}`);
-                    const icon = document.getElementById(`toggle-icon-${year}`);
-                    detailRows.forEach(row => {
-                        row.style.display = row.style.display === 'none' ? '' : 'none';
+            eventsToProcess.forEach(event => {
+              event.data.forEach(row => {
+                row.seatsLeft.forEach(seat => {
+                  if (seat.name !== 'VACANTE') {
+                    reportData.push({
+                      eventName: event.name,
+                      school: row.school,
+                      rowId: row.id.split('-row-')[1] || row.id,
+                      name: seat.name,
+                      pos: seat.pos,
+                      block: 'Izquierda',
+                      status: checkedStudents.has(seat.id) ? 'PRESENTE' : 'AUSENTE'
                     });
-                    icon.classList.toggle('fa-chevron-right');
-                    icon.classList.toggle('fa-chevron-down');
-                };
-
-                // 2.2 Renderizar meses (detalle)
-                
-                // El acumulado mensual comienza con el ahorro al inicio del año
-                let monthlyCumulativeSaving = cumulativeSaving - yearNetSavingTotal; 
-                
-                // Si no es el año actual, el renderizado de meses debe comenzar en 0 (Enero).
-                const renderStartMonth = (year !== currentYear) ? 0 : currentMonthNumber;
-                
-                // Si el año es histórico (minYear < currentYear), el acumulado debe empezar desde el valor del mes anterior del año
-                if (year === minYear && minYear < currentYear) {
-                    monthlyCumulativeSaving = 0;
-                }
-                
-                if (year === currentYear) {
-                    // Si es el año actual, el acumulado debe empezar desde el histórico calculado (mes anterior)
-                    monthlyCumulativeSaving = totals.historicalSavings;
-                }
-                
-                for (let month = renderStartMonth; month < 12; month++) {
-                    const data = allMonthlyData[year][month];
-                    
-                    const tr = body.insertRow();
-                    tr.style.display = 'none'; 
-                    tr.classList.add(`detail-row-${year}`); 
-                    
-                    // El acumulado mensual es el del mes anterior + el flujo neto del mes actual
-                    monthlyCumulativeSaving += data.netSaving;
-                    
-                    const rowData = [
-                        `${data.monthName} ${year}`,
-                        data.fixedIncome,
-                        data.fixedExpense,
-                        data.varIncome,
-                        data.varExpense,
-                        data.netSaving,
-                        monthlyCumulativeSaving // Acumulado real a fin de mes
-                    ];
-                    
-                    rowData.forEach((val, index) => {
-                        const td = tr.insertCell();
-                        if (index > 0) {
-                            td.innerHTML = formatCurrency(val); 
-                        } else {
-                            td.textContent = val;
-                            td.style.paddingLeft = '30px'; 
-                        }
-                        if (index === 6) { 
-                            td.classList.add('accumulated-saving'); 
-                            td.style.backgroundColor = 'transparent'; 
-                        }
+                  }
+                });
+                row.seatsRight.forEach(seat => {
+                  if (seat.name !== 'VACANTE') {
+                    reportData.push({
+                      eventName: event.name,
+                      school: row.school,
+                      rowId: row.id.split('-row-')[1] || row.id,
+                      name: seat.name,
+                      pos: seat.pos,
+                      block: 'Derecha',
+                      status: checkedStudents.has(seat.id) ? 'PRESENTE' : 'AUSENTE'
                     });
-
-                    if (data.isCurrent) {
-                        tr.classList.add('current-month');
-                    }
-                }
-            }
-        };
-
-
-        // --- 6. FUNCIONES GLOBALES Y MANEJO DE EVENTOS ---
-        
-        // **MEJORA: La función renderLists ahora acepta filtros**
-        const renderLists = () => {
-             // Lista de Fijos
-            const fixedIncomeListEl = document.getElementById('fixed-income-list');
-            fixedIncomeListEl.innerHTML = '';
-            fixedIncomes.forEach((t, index) => {
-                fixedIncomeListEl.innerHTML += `
-                    <li>
-                        <span>${t.detail}</span>
-                        <span class="amount ingreso">${formatCurrency(t.amount)}</span>
-                        <div class="history-action">
-                            <button onclick="deleteFixedIncome(${index})"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </li>
-                `;
-            });
-            
-            const fixedListEl = document.getElementById('fixed-list');
-            fixedListEl.innerHTML = '';
-            fixedExpenses.forEach((t, index) => {
-                fixedListEl.innerHTML += `
-                    <li>
-                        <span>${t.detail}</span>
-                        <span class="amount egreso">${formatCurrency(t.amount)}</span>
-                        <div class="history-action">
-                            <button onclick="deleteFixedExpense(${index})"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </li>
-                `;
-            });
-            
-            // Lista de Transacciones Variables (Historial)
-            const historyListEl = document.getElementById('history-list');
-            historyListEl.innerHTML = '';
-            
-            // Obtener valores de los filtros (NUEVO)
-            const filterType = filterTypeEl.value;
-            const filterCategory = filterCategoryEl.value;
-
-            // Filtrar transacciones (NUEVO)
-            let filteredTransactions = variableTransactions.filter(t => {
-                const typeMatch = filterType === 'todos' || t.type === filterType;
-                const categoryMatch = filterCategory === 'todos' || t.category === filterCategory;
-                return typeMatch && categoryMatch;
-            });
-
-            // Ordenar por fecha, el más reciente primero
-            const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            if (sortedTransactions.length === 0) {
-                 historyListEl.innerHTML = `<li style="justify-content: center; color: var(--color-historical);">No hay movimientos que coincidan con los filtros.</li>`;
-            }
-
-            sortedTransactions.forEach((t) => {
-                // Usamos el índice original para la eliminación
-                const originalIndex = variableTransactions.findIndex(original => original === t); 
-                
-                historyListEl.innerHTML += `
-                    <li>
-                        <div class="history-detail">
-                            <span>${t.detail} (${t.category})</span>
-                            <span class="date">${t.date}</span>
-                        </div>
-                        <span class="history-amount ${t.type}">${formatCurrency(t.type === 'ingreso' ? t.amount : -t.amount)}</span>
-                        <div class="history-action">
-                            <button onclick="deleteVariableTransaction(${originalIndex})"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </li>
-                `;
-            });
-        };
-        
-        // Asignar eventos de cambio a los filtros para que rendericen la lista de nuevo
-        filterTypeEl.addEventListener('change', renderLists);
-        filterCategoryEl.addEventListener('change', renderLists);
-        
-        // Función de Progreso de la Meta
-        const updateGoalProgress = (netSavingPerMonth, historicalSavings) => { 
-            const progressBar = document.getElementById('progress-bar');
-            const goalStatus = document.getElementById('goal-status');
-            
-            if (goal <= 0) {
-                progressBar.style.width = '0%';
-                goalStatus.textContent = 'Establece una meta para comenzar a proyectar.';
-                return;
-            }
-
-            // Usamos el ahorro histórico + el flujo neto del mes actual como "ahorro actual"
-            const currentTotalSavings = historicalSavings + (netSavingPerMonth > 0 ? netSavingPerMonth : 0);
-            
-            const percentage = Math.min(100, (currentTotalSavings / goal) * 100);
-            progressBar.style.width = `${percentage}%`;
-            
-            let required = goal - currentTotalSavings;
-            
-            if (netSavingPerMonth > 0) {
-                goalStatus.innerHTML = `Flujo neto positivo: ${formatCurrency(netSavingPerMonth).replace(/<\/?span[^>]*>/g, '')} por mes.`;
-                if (required < 0) {
-                     goalStatus.innerHTML = `¡Meta superada! Capital extra ${formatCurrency(Math.abs(required)).replace(/<\/?span[^>]*>/g, '')}.`;
-                }
-            } else {
-                goalStatus.textContent = 'El Flujo de Caja Mensual no es positivo. ¡Revisa tus variables y recurrentes!';
-            }
-        };
-
-        // Función de Gráficos
-        const updateCharts = (totals) => { 
-            // 1. Gráfico de Distribución de GASTOS (Fijos + Variables del Mes)
-            if (distChart) distChart.destroy();
-
-            const fixedExpenseLabels = fixedExpenses.map(t => t.detail);
-            const fixedExpenseAmounts = fixedExpenses.map(t => t.amount);
-            
-            const monthlyVariableExpense = variableTransactions.filter(t => {
-                const transactionDate = new Date(t.date);
-                return t.type === 'egreso' && `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === currentMonthKey;
-            });
-            
-            const variableExpenseByCategory = monthlyVariableExpense.reduce((acc, t) => {
-                acc[t.category] = (acc[t.category] || 0) + t.amount;
-                return acc;
-            }, {});
-
-            const combinedLabels = [...fixedExpenseLabels, ...Object.keys(variableExpenseByCategory)];
-            const combinedAmounts = [...fixedExpenseAmounts, ...Object.values(variableExpenseByCategory)];
-
-            if (combinedAmounts.reduce((a, b) => a + b, 0) > 0) { 
-                distChart = new Chart(distCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: combinedLabels,
-                        datasets: [{
-                            data: combinedAmounts,
-                            backgroundColor: ['#5e72e4', '#2dce89', '#f5365c', '#11cdef', '#ffc107', '#00bcd4', '#778899', '#f53699'],
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false, 
-                        plugins: {
-                            legend: { position: 'top', },
-                            title: { display: true, text: 'Distribución de GASTOS (Fijos + Variables del Mes)' }
-                        }
-                    }
+                  }
                 });
-            } else {
-                 distCtx.clearRect(0, 0, distCtx.canvas.width, distCtx.canvas.height);
-                 distCtx.font = "16px Poppins";
-                 distCtx.textAlign = "center";
-                 distCtx.fillText("No hay gastos fijos o variables en el mes para mostrar.", distCtx.canvas.width/2, distCtx.canvas.height/2);
-            }
-
-
-            // 2. Gráfico de Tendencia de Flujo de Caja Anual (Bar Chart)
-            if (trendChart) trendChart.destroy();
-            
-            const trendLabels = [];
-            const trendData = [];
-
-            // Últimos 6 meses (Históricos/Actual)
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setMonth(currentMonthNumber - i);
-                const year = date.getFullYear();
-                const month = date.getMonth();
-                const monthKey = `${year}-${month}`;
-                
-                const historicalVariable = variableTransactions.filter(t => {
-                    const transactionDate = new Date(t.date);
-                    return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
-                });
-                const hVarIncome = historicalVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
-                const hVarExpense = historicalVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
-                
-                const netFlow = (totals.totalFixedIncome + hVarIncome) - (totals.totalFixedExpense + hVarExpense);
-                
-                trendLabels.push(`${monthsNames[month]} ${year % 100}`);
-                trendData.push(netFlow);
-            }
-
-            // Próximos 6 meses (Proyectado - asumiendo Variables = 0)
-            for (let i = 1; i <= 6; i++) {
-                const date = new Date();
-                date.setMonth(currentMonthNumber + i);
-                const year = date.getFullYear();
-                const month = date.getMonth();
-                
-                const netFlowProjected = totals.totalFixedIncome - totals.totalFixedExpense; 
-                
-                trendLabels.push(`${monthsNames[month]} ${year % 100}*`);
-                trendData.push(netFlowProjected);
-            }
-            
-            trendChart = new Chart(trendCtx, {
-                type: 'bar',
-                data: {
-                    labels: trendLabels,
-                    datasets: [{
-                        label: 'Flujo Neto Mensual (Pasado/Proyectado*)',
-                        data: trendData,
-                        backgroundColor: (ctx) => {
-                            const index = ctx.dataIndex;
-                            const isProjected = index > 6;
-                            const value = ctx.parsed.y;
-                            if (isProjected) return value > 0 ? 'rgba(0, 188, 212, 0.5)' : 'rgba(245, 54, 92, 0.5)'; 
-                            return value > 0 ? 'var(--color-saving)' : 'var(--color-expense)';
-                        }
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, 
-                    plugins: {
-                        legend: { display: false },
-                        title: { display: true, text: 'Tendencia de Flujo Neto Mensual (13 Meses)' }
-                    },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
-                }
+              });
             });
+
+            const fileName = eventId ? `Asistencia_${eventsToProcess[0].name}.xls` : "Reporte_General_UTPL.xls";
+            exportToExcelHTML(reportData, fileName);
+          };
+
+          if (!activeEvent) {
+            return (
+               <EventSelector 
+                  onSelectEvent={handleSelectEvent} 
+                  onExportGlobal={() => generateReport(null)}
+               />
+            );
+          }
+
+          return (
+            <EventWorkspace 
+              event={activeEvent}
+              checkedStudents={checkedStudents}
+              onToggleAttendance={toggleAttendance}
+              onGoHome={goHome}
+              onExportEvent={() => generateReport(activeEvent.id)}
+            />
+          );
         };
 
-        // Funciones Globales de Eliminación
-        window.deleteFixedIncome = (index) => { 
-            fixedIncomes.splice(index, 1); 
-            updateUI(); 
-            showToast('Ingreso fijo eliminado.', 'success'); 
-        };
-        
-        window.deleteFixedExpense = (index) => { 
-            fixedExpenses.splice(index, 1); 
-            updateUI(); 
-            showToast('Gasto fijo eliminado.', 'success'); 
-        };
-        
-        window.deleteVariableTransaction = (index) => { 
-            variableTransactions.splice(index, 1); 
-            updateUI(); 
-            showToast('Movimiento variable eliminado.', 'success'); 
-        };
-
-        // --- Manejo de Modales y Eventos ---
-        
-        // Apertura y color del modal variable
-        const openVariableModal = (type) => {
-            variableTypeInput.value = type;
-            // Se añaden los íconos para los botones (fueron removidos en la corrección anterior por precaución)
-            variableSubmitBtn.innerHTML = (type === 'ingreso') ? '<i class="fas fa-plus-circle"></i> Guardar Ingreso' : '<i class="fas fa-minus-circle"></i> Guardar Gasto';
-            variableSubmitBtn.style.backgroundColor = (type === 'ingreso') ? 'var(--color-income)' : 'var(--color-expense)';
-            variableModal.style.display = 'block';
-            document.getElementById('variable-date').value = new Date().toISOString().substring(0, 10); 
-            // Resetear la validación visual al abrir
-            variableTransactionForm.querySelectorAll('input, select').forEach(el => el.classList.remove('invalid'));
-        };
-        openIncomeModalBtn.onclick = () => openVariableModal('ingreso');
-        openExpenseModalBtn.onclick = () => openVariableModal('egreso');
-
-        // Cierre de Modales
-        closeFixedBtn.onclick = () => { fixedModal.style.display = 'none'; };
-        closeVariableBtn.onclick = () => { variableModal.style.display = 'none'; };
-        window.onclick = (event) => { 
-            if (event.target == fixedModal) { fixedModal.style.display = 'none'; }
-            if (event.target == variableModal) { variableModal.style.display = 'none'; }
-        };
-
-        // Función de Validación
-        const validateForm = (form) => {
-            let isValid = true;
-            form.querySelectorAll('input[required], select[required]').forEach(input => {
-                if (!input.value || (input.type === 'number' && parseFloat(input.value) <= 0)) {
-                    input.classList.add('invalid');
-                    isValid = false;
-                } else {
-                    input.classList.remove('invalid');
-                }
-            });
-            return isValid;
-        };
-
-
-        // Evento: Guardar Ingreso Fijo (Múltiple)
-        fixedIncomeForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!validateForm(fixedIncomeForm)) {
-                showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
-                return;
-            }
-            fixedIncomes.push({
-                detail: document.getElementById('fixed-income-detail').value,
-                amount: parseFloat(document.getElementById('fixed-income-amount').value)
-            });
-            fixedIncomeForm.reset();
-            updateUI();
-            showToast('Ingreso fijo añadido con éxito.', 'success'); 
-        });
-
-        // Evento: Guardar Gasto Fijo
-        fixedExpenseForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!validateForm(fixedExpenseForm)) {
-                showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
-                return;
-            }
-            fixedExpenses.push({
-                detail: document.getElementById('fixed-expense-detail').value,
-                amount: parseFloat(document.getElementById('fixed-expense-amount').value)
-            });
-            fixedExpenseForm.reset();
-            updateUI();
-            showToast('Gasto fijo añadido con éxito.', 'success'); 
-        });
-        
-        // Evento: Guardar Transacción Variable
-        variableTransactionForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (!validateForm(variableTransactionForm)) {
-                 showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
-                 return;
-            }
-            variableTransactions.push({ 
-                detail: document.getElementById('variable-detail').value,
-                amount: parseFloat(document.getElementById('variable-amount').value),
-                type: document.getElementById('modal-variable-type').value,
-                date: document.getElementById('variable-date').value,
-                category: document.getElementById('variable-category').value
-            });
-            variableTransactionForm.reset();
-            variableModal.style.display = 'none';
-            updateUI();
-            showToast('Movimiento variable guardado con éxito.', 'success'); 
-        });
-        
-        // Evento: Abrir Modal Fijos (Asegura la lista actualizada)
-        openFixedBtn.onclick = () => { 
-            fixedModal.style.display = 'block'; 
-            renderLists(); 
-            // Re-renderizar UI para actualizar la calculadora de flujo
-            updateUI(); 
-        };
-        
-        // Evento: Actualizar Meta
-        document.getElementById('goal-input').addEventListener('change', (e) => {
-            goal = parseFloat(e.target.value) || 0;
-            updateUI();
-            showToast('Meta actualizada.', 'info'); 
-        });
-
-        // --- 7. INICIALIZACIÓN ---
-        const init = () => {
-            document.getElementById('goal-input').value = goal > 0 ? formatValue(goal) : '';
-            updateUI(); 
-        };
-
-        init();
-    });
-</script>
-
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(<AbanderadosApp />);
+        } else {
+            console.error("No se encontró el elemento root");
+        }
+    </script>
 </body>
 </html>
