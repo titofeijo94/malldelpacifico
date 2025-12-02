@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINPRO 9.0: Dashboard Personal de Ahorro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- 1. VARIABLES Y BASE --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        :root {
+            --color-bg: #f5f7fa; /* Fondo más claro */
+            --color-card: #ffffff;
+            --color-text: #32325d; /* Texto más oscuro y profesional */
+            --color-primary: #5e72e4; /* Azul Primario */
+            --color-income: #2dce89; /* Verde (Ingreso) */
+            --color-expense: #f5365c; /* Rojo (Gasto) */
+            --color-projection: #fb6340; /* Naranja (Proyección) */
+            --color-fixed: #11cdef; /* Cyan (Fijos) */
+            --color-saving: #00bcd4; /* Azul Turquesa (Ahorro) */
+            --color-warning: #ffd600; /* Amarillo (Alerta) */
+            --color-historical: #778899; /* Gris para historial */
+            --shadow: 0 0 2rem 0 rgba(136, 152, 170, 0.15); /* Sombra más suave y moderna */
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--color-bg); color: var(--color-text); line-height: 1.6; }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem; }
+        
+        /* --- 2. HEADER Y BOTONES --- */
+        header { 
+            background: var(--color-card); padding: 1.5rem 2rem; border-radius: 12px; 
+            box-shadow: var(--shadow); margin-bottom: 2rem; 
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;
+        }
+        header h1 { color: var(--color-primary); font-size: 1.6rem; font-weight: 700; }
+        .header-actions { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .input-actions { display: flex; gap: 10px; }
+        
+        .btn-input, .btn-action { 
+            padding: 10px 18px; border: none; border-radius: 8px; font-weight: 600; 
+            cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+            text-transform: uppercase;
+            white-space: nowrap; /* Evita que el texto se rompa en los botones */
+        }
+        .btn-input.income { background-color: var(--color-income); color: white; }
+        .btn-input.expense { background-color: var(--color-expense); color: white; }
+        #open-fixed-modal-btn { background-color: var(--color-fixed); color: white; }
+        
+        /* Contenedor de Meta (Mejor Estilo) */
+        .goal-container { 
+            display: flex; align-items: center; background-color: #f6f9fc; padding: 8px 12px; 
+            border-radius: 8px; border: 1px solid #e9ecef;
+        }
+        .goal-container label { font-weight: 600; margin-right: 8px; color: var(--color-primary); }
+        #goal-input { 
+            border: none; padding: 5px; border-radius: 4px; 
+            text-align: right; font-weight: 600; background: transparent; 
+            width: 100px; color: var(--color-expense);
+        }
+
+        /* --- 3. DASHBOARD Y TARJETAS KPI --- */
+        .dashboard { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 1.5rem; 
+            margin-bottom: 2rem; 
+        }
+        .card { 
+            background-color: var(--color-card); padding: 1.2rem; border-radius: 12px; 
+            box-shadow: var(--shadow); text-align: left; transition: transform 0.3s; 
+            border-left: 5px solid transparent;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h2 { 
+            font-size: 0.8rem; color: #8898aa; margin-bottom: 0.5rem; font-weight: 600; 
+            text-transform: uppercase; display: flex; align-items: center;
+        }
+        .card h2 i { margin-right: 8px; }
+        .card p { font-size: 1.8rem; font-weight: 700; color: var(--color-text); }
+
+        .card.fixed { border-left-color: var(--color-fixed); }
+        .card.income { border-left-color: var(--color-income); }
+        .card.expense { border-left-color: var(--color-expense); }
+        .card.saving { border-left-color: var(--color-saving); }
+        .card.projection { border-left-color: var(--color-projection); }
+        .card.historical { border-left-color: var(--color-historical); } 
+        
+        .card.saving p { color: var(--color-saving); }
+        .card.balance p { color: var(--color-primary); }
+        
+        /* --- 4. SECCIÓN DE METAS --- */
+        .goal-container-main { 
+            background-color: var(--color-card); padding: 1.5rem; border-radius: 12px; 
+            box-shadow: var(--shadow); margin-bottom: 2rem;
+        }
+        .goal-container-main h3 { color: var(--color-text); margin-bottom: 15px; font-weight: 600; }
+        
+        .progress-bar-container { 
+            height: 10px; background-color: #e9ecef; border-radius: 5px; 
+            overflow: hidden; margin-bottom: 15px;
+        }
+        .progress-bar { 
+            height: 100%; width: 0%; background-color: var(--color-primary); 
+            transition: width 0.5s ease-in-out; border-radius: 5px;
+        }
+        
+        .goal-kpis { display: flex; justify-content: space-between; gap: 1.5rem; }
+        .goal-kpis .card { flex-grow: 1; text-align: center; border-left: none; }
+        .goal-kpis .card h2 { justify-content: center; }
+        .goal-kpis .card p { font-size: 1.4rem !important; }
+        
+        /* --- 5. LEDGER (CORE) --- */
+        .ledger-container { 
+            background-color: var(--color-card); padding: 1.5rem; border-radius: 12px; 
+            box-shadow: var(--shadow); overflow-x: auto; margin-top: 2rem;
+        }
+        #projection-ledger { width: 100%; border-collapse: collapse; text-align: right; min-width: 900px; }
+        #projection-ledger th, #projection-ledger td { padding: 12px 18px; border: 1px solid #eee; }
+        #projection-ledger th { 
+            background-color: var(--color-primary); color: white; text-align: center; 
+            font-size: 0.9em; position: sticky; top: 0; font-weight: 700;
+        }
+        #projection-ledger td:first-child { 
+            text-align: left; font-weight: 600; position: sticky; left: 0; 
+            background-color: #fcfcfc; z-index: 10;
+        }
+        #projection-ledger tr:nth-child(even) { background-color: #f8f9fe; } /* Alternancia más sutil */
+        
+        /* Estilos de Contenido del Ledger */
+        #projection-ledger .accumulated-saving { font-weight: 700; background-color: #e0f7fa; color: var(--color-saving); }
+        
+        /* Estilos para el Despliegue Anual */
+        #projection-ledger tr.meta-alcanzada { 
+            background-color: #e9ecef !important; /* Fondo más neutro para el resumen */
+            color: var(--color-primary); 
+            font-weight: 700;
+        } 
+        .year-toggle {
+            margin-right: 10px;
+            color: var(--color-primary);
+            transition: transform 0.2s;
+        }
+        .fa-chevron-down {
+            transform: rotate(90deg);
+        }
+
+        #projection-ledger .current-month { background-color: var(--color-warning) !important; color: var(--color-text); } /* Mes Actual */
+        #projection-ledger .negative { color: var(--color-expense); font-weight: 600; } /* Números Negativos */
+        
+        /* --- 6. GRÁFICOS Y HISTORIAL (Ajuste de Tamaño) --- */
+        /* Grilla principal ajustada para 2/3 y 1/3 */
+        .charts-history-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 2rem; }
+        .history-container { 
+            background: var(--color-card); padding: 1.5rem; border-radius: 12px; 
+            box-shadow: var(--shadow);
+        }
+        .chart-box { 
+            margin-bottom: 20px; 
+            max-height: 350px; /* Reducción de altura máxima */
+        }
+        .history-container h3 { margin-bottom: 15px; color: var(--color-text); font-weight: 600; }
+        
+        /* Controles de Filtro */
+        .history-filters {
+            display: flex; gap: 10px; margin-bottom: 15px;
+        }
+        .history-filters select {
+            padding: 8px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 0.9rem;
+            flex-grow: 1;
+        }
+        
+        /* Lista de Historial */
+        #history-list { 
+            list-style-type: none; 
+            max-height: 300px; /* Ajuste para dejar espacio para filtros */
+            overflow-y: auto; 
+            padding-right: 10px; 
+        }
+        #history-list li { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 0; border-bottom: 1px dotted #eee; font-size: 0.95rem;
+        }
+        #history-list li:last-child { border-bottom: none; }
+        .history-detail span { display: block; }
+        .history-detail .date { font-size: 0.8rem; color: #8898aa; }
+        .history-amount { font-weight: 600; }
+        .history-amount.ingreso { color: var(--color-income); }
+        .history-amount.egreso { color: var(--color-expense); }
+        .history-action button { 
+            background: none; border: none; color: var(--color-expense); 
+            cursor: pointer; opacity: 0.7; transition: opacity 0.2s;
+        }
+        .history-action button:hover { opacity: 1; }
+        
+        /* Lista de Fijos */
+        #fixed-income-list li, #fixed-list li {
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 8px 0; border-bottom: 1px dotted #eee;
+        }
+        #fixed-income-list li span, #fixed-list li span { font-weight: 500; }
+        #fixed-list .amount { color: var(--color-expense); }
+
+
+        /* --- 7. MODALES Y FORMULARIOS --- */
+        .modal { 
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; 
+            height: 100%; overflow: auto; background-color: rgba(0, 0, 0, 0.4); 
+            padding-top: 60px;
+        }
+        .modal-content { 
+            background-color: var(--color-card); margin: 5% auto; padding: 30px; 
+            border-radius: 12px; box-shadow: var(--shadow); 
+            width: 90%; max-width: 500px; position: relative;
+        }
+        .close-btn { 
+            color: #aaa; float: right; font-size: 28px; font-weight: bold; 
+            position: absolute; top: 10px; right: 20px;
+        }
+        .close-btn:hover, .close-btn:focus { color: var(--color-expense); text-decoration: none; cursor: pointer; }
+        
+        .modal-content h2 { color: var(--color-primary); margin-bottom: 20px; font-size: 1.5rem; }
+        .modal-content form input[type="text"], .modal-content form input[type="number"], .modal-content form input[type="date"], .modal-content form select {
+            width: 100%; padding: 12px; margin: 8px 0 15px 0; display: inline-block; 
+            border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;
+            font-size: 1rem;
+        }
+        /* Resaltar campos inválidos (Validación Visual) */
+        .modal-content form input:invalid:not(:placeholder-shown), .modal-content form input.invalid {
+            border-color: var(--color-expense) !important;
+            box-shadow: 0 0 0 0.2rem rgba(245, 54, 92, 0.25);
+        }
+        .modal-content form button { 
+            width: 100%; padding: 12px; background-color: var(--color-primary); 
+            color: white; border: none; border-radius: 6px; cursor: pointer; 
+            font-weight: 600; transition: background-color 0.3s;
+        }
+        .modal-content form button:hover { opacity: 0.9; }
+
+        /* --- 8. TOAST NOTIFICATIONS (NUEVO) --- */
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 2000;
+        }
+        .toast {
+            background-color: #333; color: white; padding: 15px 25px; border-radius: 8px;
+            margin-bottom: 10px; opacity: 0; transition: opacity 0.5s, transform 0.5s;
+            transform: translateX(100%); min-width: 250px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-size: 0.95rem; display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .toast i.fas { font-size: 1.2rem; }
+        .toast.success { background-color: var(--color-income); }
+        .toast.error { background-color: var(--color-expense); }
+        .toast.info { background-color: var(--color-primary); }
+        
+        /* --- 9. FOOTER DE AUTOR --- */
+        .author-footer {
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid #e9ecef;
+            color: #8898aa;
+            font-size: 0.85rem;
+        }
+        .author-footer a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .author-footer a:hover {
+            text-decoration: underline;
+        }
+
+
+        /* --- 10. MEDIA QUERIES PARA RESPONSIVE DESIGN (MEJORADO) --- */
+
+        /* Ajustes para tabletas (992px y menos) */
+        @media (max-width: 992px) {
+            .container { margin: 1rem auto; padding: 0 1rem; }
+            
+            /* Header: Apila los botones de acción para mejor espacio */
+            header { 
+                flex-direction: column; 
+                align-items: flex-start;
+            }
+            .header-actions { 
+                width: 100%;
+                justify-content: space-between; /* Distribuye bien los grupos de botones/meta */
+            }
+            .input-actions {
+                flex-grow: 1; 
+                justify-content: flex-start;
+            }
+            
+            /* Dashboard: Deja que el grid haga su trabajo, pero asegura padding/margen */
+            .dashboard { 
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Tarjetas un poco más pequeñas */
+                gap: 1rem;
+            }
+            .card h2 { font-size: 0.75rem; }
+            .card p { font-size: 1.6rem; }
+            
+            /* Metas: Los KPIs de meta se apilan en dos columnas */
+            .goal-kpis { 
+                flex-wrap: wrap; 
+                gap: 1rem;
+            }
+            .goal-kpis .card {
+                min-width: calc(50% - 0.5rem); /* Ocupa la mitad del ancho */
+            }
+
+            /* Ledger: No requiere cambios, ya tiene overflow-x: auto y min-width: 900px */
+            
+            /* Gráficos e Historial: Se apilan verticalmente */
+            .charts-history-grid { 
+                grid-template-columns: 1fr; 
+                gap: 1.5rem; 
+            }
+            .chart-box { max-height: 400px; } /* Altura fija para gráficos en móviles */
+        }
+
+        /* Ajustes para móviles pequeños (576px y menos) */
+        @media (max-width: 576px) {
+            
+            /* Header: Todos los elementos se apilan */
+            .header-actions {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            .input-actions {
+                width: 100%;
+                flex-direction: column; /* Apila los botones de ingreso/gasto */
+            }
+            .btn-input, .btn-action { width: 100%; }
+            .goal-container { width: 100%; }
+            #goal-input { width: 100%; } /* Input de meta al 100% */
+
+            /* Dashboard: Muestra 2 columnas para una mejor densidad */
+            .dashboard { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+            .card { padding: 1rem; }
+            .card h2 { font-size: 0.65rem; }
+            .card p { font-size: 1.4rem; }
+            
+            /* Metas: Apila los KPIs en una sola columna */
+            .goal-kpis .card {
+                min-width: 100%; 
+            }
+            
+            /* Historial: Asegura que los filtros se apilen */
+            .history-filters { flex-direction: column; gap: 8px; }
+            .history-filters select { width: 100%; }
+            
+            /* Modales: Ajusta el margen superior para mejor visualización */
+             .modal-content { margin: 10% auto; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <header>
+        <h1><i class="fas fa-chart-pie"></i> FINPRO 9.0: Dashboard Personal</h1>
+        <div class="header-actions">
+            <div class="input-actions">
+                <button id="open-income-modal" class="btn-input income"><i class="fas fa-plus"></i> Ingreso Variable</button>
+                <button id="open-expense-modal" class="btn-input expense"><i class="fas fa-minus"></i> Gasto Variable</button>
+            </div>
+            
+            <button id="open-fixed-modal-btn" class="btn-action"><i class="fas fa-cog"></i> Recurrentes</button>
+            <div class="goal-container">
+                <label for="goal-input">🎯 Meta Total:</label>
+                <input type="number" id="goal-input" placeholder="5000" step="0.01">
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard">
+        <div class="card fixed"><h2><i class="fas fa-wallet"></i> Ingresos Fijos</h2><p id="fixed-income-total">$0.00</p></div>
+        <div class="card fixed"><h2><i class="fas fa-house-chimney"></i> Gasto Fijo</h2><p id="fixed-expense">$0.00</p></div>
+        <div class="card income"><h2><i class="fas fa-money-bill-transfer"></i> Ingreso Variable (Mes)</h2><p id="total-variable-income">$0.00</p></div>
+        <div class="card expense"><h2><i class="fas fa-shopping-basket"></i> Gasto Variable (Mes)</h2><p id="total-variable-expense">$0.00</p></div>
+        <div class="card saving"><h2><i class="fas fa-piggy-bank"></i> Flujo de Caja Mensual</h2><p id="net-saving-per-month">$0.00</p></div>
+        <div class="card balance"><h2><i class="fas fa-calendar-check"></i> Capital Proyectado (12 meses)</h2><p id="annual-projection">$0.00</p></div>
+        <div class="card historical"><h2><i class="fas fa-clock-rotate-left"></i> Ahorro Histórico Acumulado</h2><p id="historical-savings">$0.00</p></div>
+    </div>
+    
+    <div class="goal-container-main">
+        <h3>Estado de la Meta: <span id="current-goal-amount">$0.00</span></h3>
+        <div class="progress-bar-container"><div class="progress-bar" id="progress-bar"></div></div>
+        
+        <div class="goal-kpis">
+            <div class="card saving">
+                <h2>Ahorro Neto/Mes Requerido:</h2>
+                <p id="goal-status" style="font-size: 1.2rem;">Ahorrando $0.00 por mes.</p>
+            </div>
+            <div class="card time">
+                <h2>Tiempo Estimado a la Meta:</h2>
+                <p id="time-to-goal" style="font-size: 1.4rem; color: var(--color-text);">---</p>
+            </div>
+            <div class="card projection">
+                <h2>Mes de Conclusión Estimada:</h2>
+                <p id="projected-completion-month" style="font-size: 1.4rem; color: var(--color-text);">---</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="ledger-container">
+        <h3 style="margin-bottom: 10px;">📊 Proyección de Ahorro Acumulado (Ledger Estratégico)</h3>
+        <table id="projection-ledger"></table>
+    </div>
+
+    <div class="charts-history-grid">
+        <div class="history-container">
+            <h3>Gráficos de Análisis</h3>
+            <div class="chart-box"><canvas id="distributionChart"></canvas></div>
+            <div class="chart-box"><canvas id="trendChart"></canvas></div>
+        </div>
+        
+        <div class="history-container">
+            <h3>Detalle de Movimientos Variables <i class="fas fa-history"></i></h3>
+            <div class="history-filters">
+                <select id="filter-type">
+                    <option value="todos">Mostrar: Todos</option>
+                    <option value="ingreso">Ingresos</option>
+                    <option value="egreso">Gastos</option>
+                </select>
+                <select id="filter-category">
+                    <option value="todos">Categoría: Todas</option>
+                    <option value="Alimentación">Alimentación</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Ocio">Ocio</option>
+                    <option value="Inversión">Inversión</option>
+                    <option value="Regalo">Regalo/Donación</option>
+                    <option value="Venta">Venta</option>
+                    <option value="Otros">Otros</option>
+                    <option value="Sin Categoría">Sin Categoría</option>
+                </select>
+            </div>
+            <ul id="history-list"></ul>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="fixed-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn fixed-close-btn">&times;</span>
+        <h2>⚙️ Ingresos y Gastos Recurrentes</h2>
+        
+        <form id="fixed-income-form">
+            <h4 style="color: var(--color-income);"><i class="fas fa-hand-holding-dollar"></i> Ingreso Fijo:</h4>
+            <input type="number" id="fixed-income-amount" placeholder="Monto del Ingreso Fijo" step="0.01" min="0" required>
+            <input type="text" id="fixed-income-detail" placeholder="Descripción (Ej: Salario 'X', Renta Apartamento)" required>
+            <button type="submit" style="background-color: var(--color-income);"><i class="fas fa-plus-circle"></i> Añadir Ingreso Fijo</button>
+        </form>
+        
+        <h4 style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; color: var(--color-income);">Ingresos Fijos Actuales:</h4>
+        <ul id="fixed-income-list" style="list-style-type: none; margin-top: 5px;"></ul>
+
+
+        <h4 style="margin-top: 20px; color: var(--color-expense);"><i class="fas fa-file-invoice-dollar"></i> Egresos Fijos Mensuales:</h4>
+        <form id="fixed-expense-form" style="margin-top: 5px;">
+            <input type="number" id="fixed-expense-amount" placeholder="Monto del Gasto Fijo" step="0.01" min="0" required>
+            <input type="text" id="fixed-expense-detail" placeholder="Descripción (Ej: Alquiler, Suscripción)" required>
+            <button type="submit" style="background-color: var(--color-expense);"><i class="fas fa-plus-circle"></i> Añadir Gasto Fijo</button>
+        </form>
+        
+        <ul id="fixed-list" style="list-style-type: none; margin-top: 15px; border-top: 1px solid #ddd; padding-top: 15px;"></ul>
+
+        <h4 style="margin-top: 20px; color: var(--color-primary); border-top: 1px solid #eee; padding-top: 15px;"><i class="fas fa-calculator"></i> Calculadora de Flujo Neto Fijo</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 10px;">Si mis ingresos fijos son <span id="calc-income" style="font-weight: bold; color: var(--color-income);">$0.00</span> y mi gasto fijo actual es <span id="calc-expense" style="font-weight: bold; color: var(--color-expense);">$0.00</span>:</p>
+        <p style="font-size: 1.1rem; font-weight: 700;">Mi Flujo Neto Fijo es: <span id="calc-net-flow" style="color: var(--color-saving);">$0.00</span></p>
+
+    </div>
+</div>
+
+<div id="variable-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn variable-close-btn">&times;</span>
+        <h2>➕ Añadir Movimiento Variable</h2>
+        <form id="variable-transaction-form">
+            <input type="hidden" id="modal-variable-type" name="variable-type" value="ingreso">
+
+            <label for="variable-date">Fecha del Movimiento:</label>
+            <input type="date" id="variable-date" required>
+            
+            <label for="variable-category" style="margin-top: 10px; display: block;">Categoría:</label>
+            <select id="variable-category" required>
+                <option value="Sin Categoría">Sin Categoría</option>
+                <option value="Alimentación">Alimentación</option>
+                <option value="Transporte">Transporte</option>
+                <option value="Ocio">Ocio</option>
+                <option value="Inversión">Inversión</option>
+                <option value="Regalo">Regalo/Donación</option>
+                <option value="Venta">Venta</option>
+                <option value="Otros">Otros</option>
+            </select>
+
+            <input type="text" id="variable-detail" placeholder="Detalle (Ej: Compra de café, Venta de artículo)" required>
+            <input type="number" id="variable-amount" placeholder="Monto" step="0.01" min="0" required>
+            
+            <button type="submit" id="variable-submit-btn">Guardar Movimiento</button>
+        </form>
+    </div>
+</div>
+
+<div class="author-footer">
+    Creado por <span style="font-weight: 700;">Tito Feijo</span> | E-mail: <a href="mailto:titofeijo@icloud.com">titofeijo@icloud.com</a>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. REFERENCIAS Y ESTADO ---
+        const fixedModal = document.getElementById('fixed-modal');
+        const variableModal = document.getElementById('variable-modal');
+        const openFixedBtn = document.getElementById('open-fixed-modal-btn');
+        const openIncomeModalBtn = document.getElementById('open-income-modal');
+        const openExpenseModalBtn = document.getElementById('open-expense-modal');
+        const closeFixedBtn = document.querySelector('.fixed-close-btn');
+        const closeVariableBtn = document.querySelector('.variable-close-btn');
+        const filterTypeEl = document.getElementById('filter-type'); 
+        const filterCategoryEl = document.getElementById('filter-category'); 
+
+        const fixedIncomeForm = document.getElementById('fixed-income-form');
+        const fixedExpenseForm = document.getElementById('fixed-expense-form');
+        const variableTransactionForm = document.getElementById('variable-transaction-form');
+        const variableTypeInput = document.getElementById('modal-variable-type');
+        const variableSubmitBtn = document.getElementById('variable-submit-btn');
+
+        let distChart, trendChart;
+        const distCtx = document.getElementById('distributionChart').getContext('2d');
+        const trendCtx = document.getElementById('trendChart').getContext('2d');
+        const monthsNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+        const today = new Date();
+        const currentMonthKey = `${today.getFullYear()}-${today.getMonth()}`;
+        const currentMonthNumber = today.getMonth();
+        const currentYear = today.getFullYear();
+
+
+        // Estado del Sistema (Persistencia)
+        let fixedIncomes = JSON.parse(localStorage.getItem('finpro_fixed_incomes')) || []; 
+        let fixedExpenses = JSON.parse(localStorage.getItem('finpro_fixed_expenses')) || []; 
+        let variableTransactions = JSON.parse(localStorage.getItem('finpro_variable_transactions')) || [];
+        let goal = parseFloat(localStorage.getItem('finpro_goal_v3')) || 0;
+
+        // --- 2. LÓGICA DE PERSISTENCIA Y FORMATO ---
+        const formatCurrency = (num) => {
+            const absNum = Math.abs(num);
+            const formatted = `$${absNum.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+            return num < 0 ? `<span class="negative">-${formatted}</span>` : formatted; 
+        };
+        const formatValue = (num) => num.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        
+        const saveData = () => {
+            localStorage.setItem('finpro_fixed_incomes', JSON.stringify(fixedIncomes)); 
+            localStorage.setItem('finpro_fixed_expenses', JSON.stringify(fixedExpenses));
+            localStorage.setItem('finpro_variable_transactions', JSON.stringify(variableTransactions));
+            localStorage.setItem('finpro_goal_v3', goal.toString());
+        };
+
+        // --- 2.5. TOAST NOTIFICATIONS ---
+        const showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const iconClass = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            
+            toast.classList.add('toast', type);
+            toast.innerHTML = `<i class="fas ${iconClass}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Forzar reflow para la transición
+            void toast.offsetWidth; 
+
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 3000); // 3 segundos
+        };
+
+        // --- 3. CÁLCULOS PRINCIPALES ---
+        const calculateTotals = () => {
+            // Totales Fijos
+            const totalFixedIncome = fixedIncomes.reduce((acc, t) => acc + t.amount, 0); 
+            const totalFixedExpense = fixedExpenses.reduce((acc, t) => acc + t.amount, 0);
+            
+            // Cálculos para la VISIÓN RÁPIDA (Solo el mes actual)
+            const monthlyVariable = variableTransactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                // La transacción debe pertenecer al mes actual Y no haber ocurrido en el futuro.
+                return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === currentMonthKey && transactionDate <= today;
+            });
+            
+            // Cálculo de Ahorro Histórico Acumulado (hasta el mes pasado)
+            let historicalSavings = 0;
+            
+            // Vamos desde el año 2020 (o el año más antiguo en transacciones) hasta el año actual
+            const transactionYears = variableTransactions.map(t => new Date(t.date).getFullYear());
+            const minYear = transactionYears.length > 0 ? Math.min(...transactionYears, currentYear) : currentYear;
+
+            for (let year = minYear; year <= currentYear; year++) { 
+                for (let month = 0; month < 12; month++) {
+                    const monthKey = `${year}-${month}`;
+                    
+                    // Solo sumar si el mes es completamente pasado
+                    if (year === currentYear && month >= currentMonthNumber) break; 
+                    
+                    const monthlyVariableHistoric = variableTransactions.filter(t => {
+                        const transactionDate = new Date(t.date);
+                        return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
+                    });
+                    
+                    const monthlyVarIncomeHistoric = monthlyVariableHistoric.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
+                    const monthlyVarExpenseHistoric = monthlyVariableHistoric.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
+                    
+                    const savingForMonth = (totalFixedIncome + monthlyVarIncomeHistoric) - (totalFixedExpense + monthlyVarExpenseHistoric);
+                    historicalSavings += savingForMonth;
+                }
+            }
+
+
+            const totalVariableIncome = monthlyVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
+            const totalVariableExpense = monthlyVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
+            
+            // Flujo Neto Mensual (Incluye todo el mes actual)
+            const netSavingPerMonth = (totalFixedIncome + totalVariableIncome) - (totalFixedExpense + totalVariableExpense);
+            
+            // Proyección Anual con Ahorro Histórico como base
+            // Mes actual (1) + meses restantes del año (12 - mes actual - 1)
+            const remainingMonthsForProjection = 12 - currentMonthNumber; // Meses restantes INCLUYENDO el actual
+            const projectedFutureMonths = 12 - remainingMonthsForProjection; // Meses que ya pasaron
+            
+            // El flujo neto fijo (Ingreso Fijo - Gasto Fijo) es lo que se proyecta para los meses futuros.
+            const netFixedFlow = totalFixedIncome - totalFixedExpense;
+            const projectedNetFlowThisYear = netFixedFlow * (12 - currentMonthNumber); 
+            
+            // Total Anual Proyectado (base histórica hasta mes pasado + (flujo neto fijo * meses restantes, asumiendo variables futuras = 0))
+            const totalAnnualProjection = historicalSavings + (netFixedFlow * (12 - currentMonthNumber));
+
+
+            return {
+                totalFixedIncome, totalFixedExpense,
+                totalVariableIncome, totalVariableExpense,
+                netSavingPerMonth, 
+                totalAnnualProjection, // Este KPI debe ser el histórico + proyección Fija hasta fin de año
+                historicalSavings,
+                totalNetBalance: netSavingPerMonth // Flujo neto del mes actual (Fijos + Variables del mes)
+            };
+        };
+
+        const updateUI = () => {
+            const totals = calculateTotals();
+
+            // 1. Actualizar KPIs
+            document.getElementById('fixed-income-total').innerHTML = formatCurrency(totals.totalFixedIncome); 
+            document.getElementById('fixed-expense').innerHTML = formatCurrency(totals.totalFixedExpense);
+            document.getElementById('total-variable-income').innerHTML = formatCurrency(totals.totalVariableIncome);
+            document.getElementById('total-variable-expense').innerHTML = formatCurrency(totals.totalVariableExpense);
+            document.getElementById('net-saving-per-month').innerHTML = formatCurrency(totals.totalNetBalance);
+            
+            // El Capital Proyectado (12 meses) es el flujo fijo proyectado
+            document.getElementById('annual-projection').innerHTML = formatCurrency(totals.totalAnnualProjection); 
+            document.getElementById('historical-savings').innerHTML = formatCurrency(totals.historicalSavings);
+            
+            // 2. Metas y Proyección
+            document.getElementById('current-goal-amount').textContent = formatCurrency(goal).replace(/<\/?span[^>]*>/g, ''); 
+            
+            const {timeString, completionMonth} = calculateTimeToGoal(totals.netSavingPerMonth, totals.historicalSavings);
+            document.getElementById('time-to-goal').textContent = timeString;
+            document.getElementById('projected-completion-month').textContent = completionMonth;
+            document.getElementById('time-to-goal').style.color = totals.netSavingPerMonth > 0 ? 'var(--color-income)' : (totals.netSavingPerMonth < 0 ? 'var(--color-expense)' : 'var(--color-text)');
+            
+            // 3. Renderizado de Componentes
+            renderLists(); // Llama a renderLists con los filtros aplicados
+            renderProjectionLedger(totals);
+            updateGoalProgress(totals.netSavingPerMonth, totals.historicalSavings);
+            updateCharts(totals);
+            
+            // 4. Actualizar Calculadora de Flujos Fijos
+            const netFlowFijo = totals.totalFixedIncome - totals.totalFixedExpense;
+            document.getElementById('calc-income').innerHTML = formatCurrency(totals.totalFixedIncome).replace(/<\/?span[^>]*>/g, '');
+            document.getElementById('calc-expense').innerHTML = formatCurrency(totals.totalFixedExpense).replace(/<\/?span[^>]*>/g, '');
+            document.getElementById('calc-net-flow').innerHTML = formatCurrency(netFlowFijo);
+
+
+            saveData();
+        };
+
+        // --- 4. CÁLCULO DE TIEMPO A META ---
+        const calculateTimeToGoal = (netSavingPerMonth, historicalSavings) => {
+            const neededAmount = goal - historicalSavings;
+            let timeString = "---";
+            let completionMonth = "N/A";
+
+            if (goal <= 0) return {timeString: "Define una meta", completionMonth: "N/A"};
+            if (neededAmount <= 0) return {timeString: "¡Meta ya alcanzada!", completionMonth: "✅"};
+            
+            // Usamos el flujo neto del mes actual, asumiendo que se mantendrá.
+            if (netSavingPerMonth <= 0) return {timeString: "🚨 ¡Ahorro Negativo!", completionMonth: "Nunca"};
+
+            const months = neededAmount / netSavingPerMonth;
+            const totalMonths = Math.ceil(months);
+            
+            const years = Math.floor(months / 12);
+            const remainingMonths = Math.round(months % 12); 
+            
+            let result = [];
+            if (years > 0) result.push(`${years} año${years > 1 ? 's' : ''}`);
+            if (remainingMonths > 0 || years === 0 && months > 0) result.push(`${remainingMonths} mes${remainingMonths !== 1 ? 'es' : ''}`);
+
+            timeString = result.length > 0 ? result.join(' y ') : "Menos de 1 mes!";
+            
+            // Cálculo del mes de conclusión:
+            let futureDate = new Date();
+            // Restablecer al inicio del mes actual para una proyección más limpia
+            futureDate.setDate(1); 
+            futureDate.setMonth(futureDate.getMonth() + totalMonths);
+            completionMonth = `${monthsNames[futureDate.getMonth()]} ${futureDate.getFullYear()}`;
+
+            return {timeString, completionMonth};
+        };
+        
+        // --- 5. RENDERIZADO DEL LEDGER ESTRATÉGICO (CORREGIDO) ---
+        const renderProjectionLedger = (totals) => {
+            const ledgerEl = document.getElementById('projection-ledger');
+            ledgerEl.innerHTML = '';
+            
+            // Encabezados
+            const header = ledgerEl.createTHead();
+            const row = header.insertRow();
+            ['Período', 'Ingresos Fijos', 'Gastos Fijos', 'Ingreso Variable', 'Gasto Variable', 'Flujo Neto', 'Ahorro Acumulado'].forEach(text => {
+                const th = document.createElement('th');
+                th.textContent = text;
+                row.appendChild(th);
+            });
+
+            const body = ledgerEl.createTBody();
+            let cumulativeSavingAtEnd = 0; 
+            let metaAlcanzada = false;
+            const totalFixedIncome = totals.totalFixedIncome; 
+            const totalFixedExpense = totals.totalFixedExpense;
+            
+            // Determinar rango de años
+            const transactionYears = variableTransactions.map(t => new Date(t.date).getFullYear());
+            const minYear = transactionYears.length > 0 ? Math.min(...transactionYears, currentYear) : currentYear;
+            const maxYear = currentYear + 3;
+
+            const allMonthlyData = {};
+
+            // 1. Calcular el flujo de cada mes (Histórico y Proyectado)
+            for (let year = minYear; year <= maxYear; year++) {
+                allMonthlyData[year] = {};
+                for (let month = 0; month < 12; month++) {
+                    const monthKey = `${year}-${month}`;
+                    
+                    let monthlyVarIncome = 0;
+                    let monthlyVarExpense = 0;
+                    
+                    // Solo usamos variables para meses que ya pasaron o el mes actual
+                    if (year < currentYear || (year === currentYear && month <= currentMonthNumber)) {
+                        const monthlyVariable = variableTransactions.filter(t => {
+                            const transactionDate = new Date(t.date);
+                            return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
+                        });
+                        monthlyVarIncome = monthlyVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
+                        monthlyVarExpense = monthlyVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
+                        
+                    } 
+                    
+                    // Nota: Para meses futuros, monthlyVarIncome/Expense es 0, por lo que el Flujo Neto será solo el Flujo Fijo.
+                    const savingForMonth = (totalFixedIncome + monthlyVarIncome) - (totalFixedExpense + monthlyVarExpense);
+                    
+                    allMonthlyData[year][month] = {
+                        monthName: monthsNames[month],
+                        fixedIncome: totalFixedIncome,
+                        fixedExpense: totalFixedExpense,
+                        varIncome: monthlyVarIncome,
+                        varExpense: monthlyVarExpense,
+                        netSaving: savingForMonth,
+                        isCurrent: year === currentYear && month === currentMonthNumber
+                    };
+                }
+            }
+
+
+            // 2. Renderizar el Ledger por año
+            
+            // El acumulado debe empezar con el valor de ahorro acumulado hasta el mes anterior al inicio del ledger.
+            let cumulativeSaving = totals.historicalSavings; // Ahorro total hasta el mes pasado.
+
+            // El resumen del primer año (Min Year) debe incluir el acumulado del año pasado si es un año anterior al actual.
+            if (minYear < currentYear) {
+                // Si el año mínimo es pasado, necesitamos calcular el acumulado de ese año en el loop.
+                cumulativeSaving = 0; // Se recalcula desde 0
+            }
+
+
+            for (let year = minYear; year <= maxYear; year++) {
+                
+                let yearNetSavingTotal = 0;
+                let yearVarIncomeTotal = 0;
+                let yearVarExpenseTotal = 0;
+                
+                // 2.1 Calcular totales de resumen del AÑO
+                for (let month = 0; month < 12; month++) {
+                    const data = allMonthlyData[year][month];
+                    
+                    // Solo sumar lo que es relevante para la proyección total a final de año.
+                    if (year < currentYear) {
+                        // Años Pasados: Suma los 12 meses históricos.
+                        yearNetSavingTotal += data.netSaving;
+                        yearVarIncomeTotal += data.varIncome;
+                        yearVarExpenseTotal += data.varExpense;
+                    } else if (year === currentYear) {
+                        // Año Actual: Solo suma hasta el mes actual.
+                        if (month <= currentMonthNumber) {
+                            yearNetSavingTotal += data.netSaving;
+                            yearVarIncomeTotal += data.varIncome;
+                            yearVarExpenseTotal += data.varExpense;
+                        }
+                    } else {
+                        // Años Futuros: Suma los 12 meses proyectados (flujo fijo).
+                         yearNetSavingTotal += data.netSaving;
+                         yearVarIncomeTotal += data.varIncome;
+                         yearVarExpenseTotal += data.varExpense;
+                    }
+                }
+                
+                // Si el año mínimo es pasado, actualiza el acumulado inicial con el flujo neto del año pasado
+                if (year === minYear && minYear < currentYear) {
+                    cumulativeSaving = yearNetSavingTotal;
+                } else {
+                    cumulativeSaving += yearNetSavingTotal; 
+                }
+
+                // Renderizar Fila de Resumen Anual
+                const trSummary = body.insertRow();
+                trSummary.classList.add('meta-alcanzada'); 
+                trSummary.id = `summary-${year}`;
+                trSummary.style.cursor = 'pointer'; 
+                
+                // Los Ingresos/Gastos Fijos mostrados deben ser los 12 meses, proyectados o reales
+                const summaryFixedIncome = (year < currentYear) ? totalFixedIncome * 12 : (year === currentYear ? totalFixedIncome * (currentMonthNumber + 1) : totalFixedIncome * 12);
+                const summaryFixedExpense = (year < currentYear) ? totalFixedExpense * 12 : (year === currentYear ? totalFixedExpense * (currentMonthNumber + 1) : totalFixedExpense * 12);
+                
+                const dataSummary = [
+                    `<i class="fas fa-chevron-right year-toggle" id="toggle-icon-${year}"></i> TOTAL AHORRO ${year}`,
+                    summaryFixedIncome,
+                    summaryFixedExpense,
+                    yearVarIncomeTotal,
+                    yearVarExpenseTotal,
+                    yearNetSavingTotal,
+                    cumulativeSaving
+                ];
+
+                dataSummary.forEach((val, index) => {
+                    const td = trSummary.insertCell();
+                    if (index > 0) {
+                        td.innerHTML = formatCurrency(val);
+                    } else {
+                        td.innerHTML = val;
+                        td.style.textAlign = 'left';
+                    }
+                    if (index === 6) { td.classList.add('accumulated-saving'); }
+                    
+                    if (index === 6 && goal > 0 && cumulativeSaving >= goal && !metaAlcanzada) {
+                        // Solo marcar la primera vez que se alcanza la meta
+                        td.classList.add('meta-alcanzada');
+                        metaAlcanzada = true; 
+                    }
+                });
+                
+                // Manejador para colapsar/expandir
+                trSummary.onclick = () => {
+                    const detailRows = document.querySelectorAll(`.detail-row-${year}`);
+                    const icon = document.getElementById(`toggle-icon-${year}`);
+                    detailRows.forEach(row => {
+                        row.style.display = row.style.display === 'none' ? '' : 'none';
+                    });
+                    icon.classList.toggle('fa-chevron-right');
+                    icon.classList.toggle('fa-chevron-down');
+                };
+
+                // 2.2 Renderizar meses (detalle)
+                
+                // El acumulado mensual comienza con el ahorro al inicio del año
+                let monthlyCumulativeSaving = cumulativeSaving - yearNetSavingTotal; 
+                
+                // Si no es el año actual, el renderizado de meses debe comenzar en 0 (Enero).
+                const renderStartMonth = (year !== currentYear) ? 0 : currentMonthNumber;
+                
+                // Si el año es histórico (minYear < currentYear), el acumulado debe empezar desde el valor del mes anterior del año
+                if (year === minYear && minYear < currentYear) {
+                    monthlyCumulativeSaving = 0;
+                }
+                
+                if (year === currentYear) {
+                    // Si es el año actual, el acumulado debe empezar desde el histórico calculado (mes anterior)
+                    monthlyCumulativeSaving = totals.historicalSavings;
+                }
+                
+                for (let month = renderStartMonth; month < 12; month++) {
+                    const data = allMonthlyData[year][month];
+                    
+                    const tr = body.insertRow();
+                    tr.style.display = 'none'; 
+                    tr.classList.add(`detail-row-${year}`); 
+                    
+                    // El acumulado mensual es el del mes anterior + el flujo neto del mes actual
+                    monthlyCumulativeSaving += data.netSaving;
+                    
+                    const rowData = [
+                        `${data.monthName} ${year}`,
+                        data.fixedIncome,
+                        data.fixedExpense,
+                        data.varIncome,
+                        data.varExpense,
+                        data.netSaving,
+                        monthlyCumulativeSaving // Acumulado real a fin de mes
+                    ];
+                    
+                    rowData.forEach((val, index) => {
+                        const td = tr.insertCell();
+                        if (index > 0) {
+                            td.innerHTML = formatCurrency(val); 
+                        } else {
+                            td.textContent = val;
+                            td.style.paddingLeft = '30px'; 
+                        }
+                        if (index === 6) { 
+                            td.classList.add('accumulated-saving'); 
+                            td.style.backgroundColor = 'transparent'; 
+                        }
+                    });
+
+                    if (data.isCurrent) {
+                        tr.classList.add('current-month');
+                    }
+                }
+            }
+        };
+
+
+        // --- 6. FUNCIONES GLOBALES Y MANEJO DE EVENTOS ---
+        
+        // **MEJORA: La función renderLists ahora acepta filtros**
+        const renderLists = () => {
+             // Lista de Fijos
+            const fixedIncomeListEl = document.getElementById('fixed-income-list');
+            fixedIncomeListEl.innerHTML = '';
+            fixedIncomes.forEach((t, index) => {
+                fixedIncomeListEl.innerHTML += `
+                    <li>
+                        <span>${t.detail}</span>
+                        <span class="amount ingreso">${formatCurrency(t.amount)}</span>
+                        <div class="history-action">
+                            <button onclick="deleteFixedIncome(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            const fixedListEl = document.getElementById('fixed-list');
+            fixedListEl.innerHTML = '';
+            fixedExpenses.forEach((t, index) => {
+                fixedListEl.innerHTML += `
+                    <li>
+                        <span>${t.detail}</span>
+                        <span class="amount egreso">${formatCurrency(t.amount)}</span>
+                        <div class="history-action">
+                            <button onclick="deleteFixedExpense(${index})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            // Lista de Transacciones Variables (Historial)
+            const historyListEl = document.getElementById('history-list');
+            historyListEl.innerHTML = '';
+            
+            // Obtener valores de los filtros (NUEVO)
+            const filterType = filterTypeEl.value;
+            const filterCategory = filterCategoryEl.value;
+
+            // Filtrar transacciones (NUEVO)
+            let filteredTransactions = variableTransactions.filter(t => {
+                const typeMatch = filterType === 'todos' || t.type === filterType;
+                const categoryMatch = filterCategory === 'todos' || t.category === filterCategory;
+                return typeMatch && categoryMatch;
+            });
+
+            // Ordenar por fecha, el más reciente primero
+            const sortedTransactions = [...filteredTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (sortedTransactions.length === 0) {
+                 historyListEl.innerHTML = `<li style="justify-content: center; color: var(--color-historical);">No hay movimientos que coincidan con los filtros.</li>`;
+            }
+
+            sortedTransactions.forEach((t) => {
+                // Usamos el índice original para la eliminación
+                const originalIndex = variableTransactions.findIndex(original => original === t); 
+                
+                historyListEl.innerHTML += `
+                    <li>
+                        <div class="history-detail">
+                            <span>${t.detail} (${t.category})</span>
+                            <span class="date">${t.date}</span>
+                        </div>
+                        <span class="history-amount ${t.type}">${formatCurrency(t.type === 'ingreso' ? t.amount : -t.amount)}</span>
+                        <div class="history-action">
+                            <button onclick="deleteVariableTransaction(${originalIndex})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </li>
+                `;
+            });
+        };
+        
+        // Asignar eventos de cambio a los filtros para que rendericen la lista de nuevo
+        filterTypeEl.addEventListener('change', renderLists);
+        filterCategoryEl.addEventListener('change', renderLists);
+        
+        // Función de Progreso de la Meta
+        const updateGoalProgress = (netSavingPerMonth, historicalSavings) => { 
+            const progressBar = document.getElementById('progress-bar');
+            const goalStatus = document.getElementById('goal-status');
+            
+            if (goal <= 0) {
+                progressBar.style.width = '0%';
+                goalStatus.textContent = 'Establece una meta para comenzar a proyectar.';
+                return;
+            }
+
+            // Usamos el ahorro histórico + el flujo neto del mes actual como "ahorro actual"
+            const currentTotalSavings = historicalSavings + (netSavingPerMonth > 0 ? netSavingPerMonth : 0);
+            
+            const percentage = Math.min(100, (currentTotalSavings / goal) * 100);
+            progressBar.style.width = `${percentage}%`;
+            
+            let required = goal - currentTotalSavings;
+            
+            if (netSavingPerMonth > 0) {
+                goalStatus.innerHTML = `Flujo neto positivo: ${formatCurrency(netSavingPerMonth).replace(/<\/?span[^>]*>/g, '')} por mes.`;
+                if (required < 0) {
+                     goalStatus.innerHTML = `¡Meta superada! Capital extra ${formatCurrency(Math.abs(required)).replace(/<\/?span[^>]*>/g, '')}.`;
+                }
+            } else {
+                goalStatus.textContent = 'El Flujo de Caja Mensual no es positivo. ¡Revisa tus variables y recurrentes!';
+            }
+        };
+
+        // Función de Gráficos
+        const updateCharts = (totals) => { 
+            // 1. Gráfico de Distribución de GASTOS (Fijos + Variables del Mes)
+            if (distChart) distChart.destroy();
+
+            const fixedExpenseLabels = fixedExpenses.map(t => t.detail);
+            const fixedExpenseAmounts = fixedExpenses.map(t => t.amount);
+            
+            const monthlyVariableExpense = variableTransactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return t.type === 'egreso' && `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === currentMonthKey;
+            });
+            
+            const variableExpenseByCategory = monthlyVariableExpense.reduce((acc, t) => {
+                acc[t.category] = (acc[t.category] || 0) + t.amount;
+                return acc;
+            }, {});
+
+            const combinedLabels = [...fixedExpenseLabels, ...Object.keys(variableExpenseByCategory)];
+            const combinedAmounts = [...fixedExpenseAmounts, ...Object.values(variableExpenseByCategory)];
+
+            if (combinedAmounts.reduce((a, b) => a + b, 0) > 0) { 
+                distChart = new Chart(distCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: combinedLabels,
+                        datasets: [{
+                            data: combinedAmounts,
+                            backgroundColor: ['#5e72e4', '#2dce89', '#f5365c', '#11cdef', '#ffc107', '#00bcd4', '#778899', '#f53699'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false, 
+                        plugins: {
+                            legend: { position: 'top', },
+                            title: { display: true, text: 'Distribución de GASTOS (Fijos + Variables del Mes)' }
+                        }
+                    }
+                });
+            } else {
+                 distCtx.clearRect(0, 0, distCtx.canvas.width, distCtx.canvas.height);
+                 distCtx.font = "16px Poppins";
+                 distCtx.textAlign = "center";
+                 distCtx.fillText("No hay gastos fijos o variables en el mes para mostrar.", distCtx.canvas.width/2, distCtx.canvas.height/2);
+            }
+
+
+            // 2. Gráfico de Tendencia de Flujo de Caja Anual (Bar Chart)
+            if (trendChart) trendChart.destroy();
+            
+            const trendLabels = [];
+            const trendData = [];
+
+            // Últimos 6 meses (Históricos/Actual)
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setMonth(currentMonthNumber - i);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const monthKey = `${year}-${month}`;
+                
+                const historicalVariable = variableTransactions.filter(t => {
+                    const transactionDate = new Date(t.date);
+                    return `${transactionDate.getFullYear()}-${transactionDate.getMonth()}` === monthKey;
+                });
+                const hVarIncome = historicalVariable.filter(t => t.type === 'ingreso').reduce((acc, t) => acc + t.amount, 0);
+                const hVarExpense = historicalVariable.filter(t => t.type === 'egreso').reduce((acc, t) => acc + t.amount, 0);
+                
+                const netFlow = (totals.totalFixedIncome + hVarIncome) - (totals.totalFixedExpense + hVarExpense);
+                
+                trendLabels.push(`${monthsNames[month]} ${year % 100}`);
+                trendData.push(netFlow);
+            }
+
+            // Próximos 6 meses (Proyectado - asumiendo Variables = 0)
+            for (let i = 1; i <= 6; i++) {
+                const date = new Date();
+                date.setMonth(currentMonthNumber + i);
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                
+                const netFlowProjected = totals.totalFixedIncome - totals.totalFixedExpense; 
+                
+                trendLabels.push(`${monthsNames[month]} ${year % 100}*`);
+                trendData.push(netFlowProjected);
+            }
+            
+            trendChart = new Chart(trendCtx, {
+                type: 'bar',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Flujo Neto Mensual (Pasado/Proyectado*)',
+                        data: trendData,
+                        backgroundColor: (ctx) => {
+                            const index = ctx.dataIndex;
+                            const isProjected = index > 6;
+                            const value = ctx.parsed.y;
+                            if (isProjected) return value > 0 ? 'rgba(0, 188, 212, 0.5)' : 'rgba(245, 54, 92, 0.5)'; 
+                            return value > 0 ? 'var(--color-saving)' : 'var(--color-expense)';
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Tendencia de Flujo Neto Mensual (13 Meses)' }
+                    },
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        };
+
+        // Funciones Globales de Eliminación
+        window.deleteFixedIncome = (index) => { 
+            fixedIncomes.splice(index, 1); 
+            updateUI(); 
+            showToast('Ingreso fijo eliminado.', 'success'); 
+        };
+        
+        window.deleteFixedExpense = (index) => { 
+            fixedExpenses.splice(index, 1); 
+            updateUI(); 
+            showToast('Gasto fijo eliminado.', 'success'); 
+        };
+        
+        window.deleteVariableTransaction = (index) => { 
+            variableTransactions.splice(index, 1); 
+            updateUI(); 
+            showToast('Movimiento variable eliminado.', 'success'); 
+        };
+
+        // --- Manejo de Modales y Eventos ---
+        
+        // Apertura y color del modal variable
+        const openVariableModal = (type) => {
+            variableTypeInput.value = type;
+            // Se añaden los íconos para los botones (fueron removidos en la corrección anterior por precaución)
+            variableSubmitBtn.innerHTML = (type === 'ingreso') ? '<i class="fas fa-plus-circle"></i> Guardar Ingreso' : '<i class="fas fa-minus-circle"></i> Guardar Gasto';
+            variableSubmitBtn.style.backgroundColor = (type === 'ingreso') ? 'var(--color-income)' : 'var(--color-expense)';
+            variableModal.style.display = 'block';
+            document.getElementById('variable-date').value = new Date().toISOString().substring(0, 10); 
+            // Resetear la validación visual al abrir
+            variableTransactionForm.querySelectorAll('input, select').forEach(el => el.classList.remove('invalid'));
+        };
+        openIncomeModalBtn.onclick = () => openVariableModal('ingreso');
+        openExpenseModalBtn.onclick = () => openVariableModal('egreso');
+
+        // Cierre de Modales
+        closeFixedBtn.onclick = () => { fixedModal.style.display = 'none'; };
+        closeVariableBtn.onclick = () => { variableModal.style.display = 'none'; };
+        window.onclick = (event) => { 
+            if (event.target == fixedModal) { fixedModal.style.display = 'none'; }
+            if (event.target == variableModal) { variableModal.style.display = 'none'; }
+        };
+
+        // Función de Validación
+        const validateForm = (form) => {
+            let isValid = true;
+            form.querySelectorAll('input[required], select[required]').forEach(input => {
+                if (!input.value || (input.type === 'number' && parseFloat(input.value) <= 0)) {
+                    input.classList.add('invalid');
+                    isValid = false;
+                } else {
+                    input.classList.remove('invalid');
+                }
+            });
+            return isValid;
+        };
+
+
+        // Evento: Guardar Ingreso Fijo (Múltiple)
+        fixedIncomeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!validateForm(fixedIncomeForm)) {
+                showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
+                return;
+            }
+            fixedIncomes.push({
+                detail: document.getElementById('fixed-income-detail').value,
+                amount: parseFloat(document.getElementById('fixed-income-amount').value)
+            });
+            fixedIncomeForm.reset();
+            updateUI();
+            showToast('Ingreso fijo añadido con éxito.', 'success'); 
+        });
+
+        // Evento: Guardar Gasto Fijo
+        fixedExpenseForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!validateForm(fixedExpenseForm)) {
+                showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
+                return;
+            }
+            fixedExpenses.push({
+                detail: document.getElementById('fixed-expense-detail').value,
+                amount: parseFloat(document.getElementById('fixed-expense-amount').value)
+            });
+            fixedExpenseForm.reset();
+            updateUI();
+            showToast('Gasto fijo añadido con éxito.', 'success'); 
+        });
+        
+        // Evento: Guardar Transacción Variable
+        variableTransactionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!validateForm(variableTransactionForm)) {
+                 showToast('🚨 Error: Revisa los campos obligatorios.', 'error');
+                 return;
+            }
+            variableTransactions.push({ 
+                detail: document.getElementById('variable-detail').value,
+                amount: parseFloat(document.getElementById('variable-amount').value),
+                type: document.getElementById('modal-variable-type').value,
+                date: document.getElementById('variable-date').value,
+                category: document.getElementById('variable-category').value
+            });
+            variableTransactionForm.reset();
+            variableModal.style.display = 'none';
+            updateUI();
+            showToast('Movimiento variable guardado con éxito.', 'success'); 
+        });
+        
+        // Evento: Abrir Modal Fijos (Asegura la lista actualizada)
+        openFixedBtn.onclick = () => { 
+            fixedModal.style.display = 'block'; 
+            renderLists(); 
+            // Re-renderizar UI para actualizar la calculadora de flujo
+            updateUI(); 
+        };
+        
+        // Evento: Actualizar Meta
+        document.getElementById('goal-input').addEventListener('change', (e) => {
+            goal = parseFloat(e.target.value) || 0;
+            updateUI();
+            showToast('Meta actualizada.', 'info'); 
+        });
+
+        // --- 7. INICIALIZACIÓN ---
+        const init = () => {
+            document.getElementById('goal-input').value = goal > 0 ? formatValue(goal) : '';
+            updateUI(); 
+        };
+
+        init();
+    });
+</script>
+
+</body>
+</html>
